@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f766e" />
+  <title>每日體重</title>
+  <style>
+    :root {
+      --bg: #f0fdfa;
+      --surface: #ffffff;
+      --text: #134e4a;
+      --muted: #5f8a85;
+      --accent: #0d9488;
+      --accent-hover: #0f766e;
+      --border: #ccfbf1;
+      --danger: #dc2626;
+      --radius: 14px;
+      --shadow: 0 4px 24px rgba(15, 118, 110, 0.08);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      background: var(--bg);
+      color: var(--text);
+      padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    }
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 0 0 4px;
+      letter-spacing: -0.02em;
+    }
+    .subtitle { color: var(--muted); font-size: 0.875rem; margin-bottom: 20px; }
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 380px) { .row { grid-template-columns: 1fr; } }
+    input[type="date"],
+    input[type="number"] {
+      width: 100%;
+      font-size: 1.05rem;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fafafa;
+      color: var(--text);
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    input:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-color: var(--accent);
+    }
+    .btn {
+      width: 100%;
+      margin-top: 14px;
+      padding: 14px 18px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .btn:active { background: var(--accent-hover); transform: scale(0.98); }
+    .chart-wrap {
+      position: relative;
+      height: 220px;
+      margin-top: 8px;
+    }
+    @media (min-width: 480px) { .chart-wrap { height: 280px; } }
+    .list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .list-header h2 { font-size: 1rem; margin: 0; }
+    .entry {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+    .entry:last-child { border-bottom: none; }
+    .entry-date { font-weight: 600; }
+    .entry-weight { color: var(--accent); font-variant-numeric: tabular-nums; }
+    .entry-del {
+      flex-shrink: 0;
+      padding: 8px 12px;
+      font-size: 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--danger);
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .empty { color: var(--muted); font-size: 0.9rem; text-align: center; padding: 20px 8px; }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: max(24px, env(safe-area-inset-bottom));
+      transform: translateX(-50%) translateY(120px);
+      background: var(--text);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 0.875rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+      z-index: 10;
+      max-width: calc(100vw - 32px);
+      text-align: center;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <h1>每日體重</h1>
+  <p class="subtitle">資料存在這台裝置上，不會上傳伺服器</p>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <label for="date">日期</label>
+        <input type="date" id="date" />
+      </div>
+      <div>
+        <label for="weight">體重（公斤）</label>
+        <input type="number" id="weight" inputmode="decimal" step="0.1" min="1" max="500" placeholder="例如 65.5" />
+      </div>
+    </div>
+    <button type="button" class="btn" id="saveBtn">儲存紀錄</button>
+  </div>
+
+  <div class="card">
+    <h2 style="margin:0 0 4px;font-size:1rem;">體重曲線</h2>
+    <p class="subtitle" style="margin:0 0 8px;">依日期排序，至少兩筆會較好看</p>
+    <div class="chart-wrap">
+      <canvas id="chart" aria-label="體重折線圖"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="list-header">
+      <h2>紀錄列表</h2>
+    </div>
+    <div id="list"></div>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    const STORAGE_KEY = "bodyWeight.entries.v1";
+
+    /** @typedef {{ date: string, weight: number }} Entry */
+
+    function loadEntries() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed
+          .filter((e) => e && typeof e.date === "string" && typeof e.weight === "number")
+          .map((e) => ({ date: e.date, weight: e.weight }));
+      } catch {
+        return [];
+      }
+    }
+
+    /** @param {Entry[]} entries */
+    function saveEntries(entries) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    }
+
+    /** @param {Entry[]} entries */
+    function sortByDate(entries) {
+      return [...entries].sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    const dateInput = document.getElementById("date");
+    const weightInput = document.getElementById("weight");
+    const saveBtn = document.getElementById("saveBtn");
+    const listEl = document.getElementById("list");
+    const toastEl = document.getElementById("toast");
+    const chartCanvas = document.getElementById("chart");
+
+    function todayISO() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+
+    dateInput.value = todayISO();
+
+    let chartInstance = null;
+
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toastEl.classList.remove("show"), 2200);
+    }
+
+    function renderList(entries) {
+      const sorted = sortByDate(entries).reverse();
+      if (sorted.length === 0) {
+        listEl.innerHTML = '<p class="empty">尚無紀錄，請先輸入體重並儲存</p>';
+        return;
+      }
+      listEl.innerHTML = sorted
+        .map(
+          (e) => `
+        <div class="entry" data-date="${e.date}">
+          <div>
+            <div class="entry-date">${e.date}</div>
+            <div class="entry-weight">${e.weight.toFixed(1)} kg</div>
+          </div>
+          <button type="button" class="entry-del" data-date="${e.date}">刪除</button>
+        </div>`
+        )
+        .join("");
+    }
+
+    function renderChart(entries) {
+      const sorted = sortByDate(entries);
+      const labels = sorted.map((e) => e.date);
+      const data = sorted.map((e) => e.weight);
+
+      if (chartInstance) {
+        chartInstance.destroy();
+        chartInstance = null;
+      }
+
+      if (sorted.length === 0) {
+        chartInstance = new Chart(chartCanvas, {
+          type: "line",
+          data: { labels: [], datasets: [{ data: [] }] },
+          options: { plugins: { legend: { display: false } } },
+        });
+        return;
+      }
+
+      chartInstance = new Chart(chartCanvas, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "體重 (kg)",
+              data,
+              borderColor: "#0d9488",
+              backgroundColor: "rgba(13, 148, 136, 0.12)",
+              fill: true,
+              tension: 0.25,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              borderWidth: 2,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { intersect: false, mode: "index" },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { maxRotation: 45, minRotation: 0, font: { size: 10 } },
+            },
+            y: {
+              beginAtZero: false,
+              ticks: { font: { size: 11 } },
+              grid: { color: "rgba(20, 78, 74, 0.08)" },
+            },
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label(ctx) {
+                  const v = ctx.parsed.y;
+                  return v != null ? `體重：${Number(v).toFixed(1)} kg` : "";
+                },
+              },
+            },
+          },
+        },
+      });
+    }
+
+    function refresh() {
+      const entries = loadEntries();
+      renderList(entries);
+      renderChart(entries);
+    }
+
+    saveBtn.addEventListener("click", () => {
+      const date = dateInput.value;
+      const w = parseFloat(String(weightInput.value).replace(",", "."));
+      if (!date) {
+        showToast("請選擇日期");
+        return;
+      }
+      if (Number.isNaN(w) || w <= 0) {
+        showToast("請輸入有效體重");
+        return;
+      }
+      let entries = loadEntries();
+      const idx = entries.findIndex((e) => e.date === date);
+      if (idx >= 0) {
+        entries[idx] = { date, weight: w };
+        showToast("已更新該日紀錄");
+      } else {
+        entries.push({ date, weight: w });
+        showToast("已儲存");
+      }
+      saveEntries(entries);
+      weightInput.value = "";
+      refresh();
+    });
+
+    listEl.addEventListener("click", (ev) => {
+      const btn = ev.target.closest(".entry-del");
+      if (!btn) return;
+      const date = btn.getAttribute("data-date");
+      if (!date) return;
+      let entries = loadEntries().filter((e) => e.date !== date);
+      saveEntries(entries);
+      showToast("已刪除");
+      refresh();
+    });
+
+    refresh();
+  </script>
+</body>
+</html>
