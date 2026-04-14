@@ -355,6 +355,7 @@
       if (!btn) return;
       const date = btn.getAttribute("data-date");
       if (!date) return;
+      if (!confirm(`確定要刪除 ${date} 的體重紀錄嗎？`)) return;
       let entries = loadEntries().filter((e) => e.date !== date);
       saveEntries(entries);
       showToast("已刪除");
