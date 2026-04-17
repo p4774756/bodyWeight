@@ -82,6 +82,39 @@
       touch-action: manipulation;
     }
     .btn:active { background: var(--accent-hover); transform: scale(0.98); }
+    .btn-secondary {
+      margin-top: 10px;
+      background: #fff;
+      color: var(--accent);
+      border: 2px solid var(--accent);
+    }
+    .btn-secondary:active { background: #ecfdf5; }
+    .btn-ghost {
+      margin-top: 8px;
+      width: 100%;
+      padding: 10px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      text-decoration: underline;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .goal-stats { font-size: 0.95rem; line-height: 1.55; margin: 0 0 14px; }
+    .goal-stats p { margin: 0 0 10px; }
+    .goal-stats p:last-child { margin-bottom: 0; }
+    .goal-stats .highlight { color: var(--accent); font-weight: 700; }
+    .encourage-line {
+      margin: 0;
+      padding: 14px 14px 14px 16px;
+      border-left: 4px solid var(--accent);
+      background: rgba(13, 148, 136, 0.08);
+      border-radius: 0 10px 10px 0;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: var(--text);
+    }
     .chart-wrap {
       position: relative;
       height: 220px;
@@ -206,6 +239,26 @@
   <p class="subtitle">資料存在這台裝置上，不會上傳伺服器</p>
 
   <div class="card">
+    <div class="list-header">
+      <h2>目標與進度</h2>
+    </div>
+    <div class="row">
+      <div>
+        <label for="goalDate">目標日期</label>
+        <input type="date" id="goalDate" />
+      </div>
+      <div>
+        <label for="goalWeight">目標體重（公斤）</label>
+        <input type="number" id="goalWeight" inputmode="decimal" step="0.1" min="1" max="500" placeholder="例如 62" />
+      </div>
+    </div>
+    <button type="button" class="btn" id="goalSaveBtn">儲存目標</button>
+    <button type="button" class="btn-ghost" id="goalClearBtn">清除目標</button>
+    <div id="goalStats" class="goal-stats" style="margin-top:16px;"></div>
+    <p id="encourageLine" class="encourage-line" aria-live="polite"></p>
+  </div>
+
+  <div class="card">
     <div class="row">
       <div>
         <label for="date">日期</label>
@@ -251,8 +304,10 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script>
     const STORAGE_KEY = "bodyWeight.entries.v1";
+    const GOAL_KEY = "bodyWeight.goal.v1";
 
     /** @typedef {{ date: string, weight: number }} Entry */
+    /** @typedef {{ targetDate: string | null, targetWeight: number | null }} Goal */
 
     function loadEntries() {
       try {
@@ -278,6 +333,88 @@
       return [...entries].sort((a, b) => a.date.localeCompare(b.date));
     }
 
+    /** @returns {Goal} */
+    function loadGoal() {
+      try {
+        const raw = localStorage.getItem(GOAL_KEY);
+        if (!raw) return { targetDate: null, targetWeight: null };
+        const o = JSON.parse(raw);
+        const targetDate =
+          typeof o.targetDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(o.targetDate) ? o.targetDate : null;
+        const tw = parseFloat(String(o.targetWeight ?? "").replace(",", "."));
+        const targetWeight = !Number.isNaN(tw) && tw > 0 ? tw : null;
+        return { targetDate, targetWeight };
+      } catch {
+        return { targetDate: null, targetWeight: null };
+      }
+    }
+
+    /** @param {Goal} goal */
+    function saveGoal(goal) {
+      localStorage.setItem(GOAL_KEY, JSON.stringify(goal));
+    }
+
+    function parseISODateLocal(iso) {
+      const p = iso.split("-").map(Number);
+      return new Date(p[0], p[1] - 1, p[2]);
+    }
+
+    /** @param {Entry[]} entries */
+    function getLatestEntry(entries) {
+      const s = sortByDate(entries);
+      if (!s.length) return null;
+      return s[s.length - 1];
+    }
+
+    const ENC = {
+      noGoal: [
+        "先為自己訂一個日期與數字吧，就像幫未來的你留一盞燈。",
+        "有目標的路比較不容易迷路，從現在開始一點一點來。",
+        "今天就可以填：想在哪一天看見什麼樣的自己？",
+        "小小目標也是承諾，你值得一份對自己的溫柔約定。",
+      ],
+      noEntry: [
+        "有了目標之後，開始記錄幾天的體重吧，線索會慢慢浮現。",
+        "每一筆數字都是在對身體說：我在聽你說話。",
+        "不用完美，只要誠實。今天先記一筆看看？",
+        "曲線會起伏，但長期趨勢很誠實，我們一起把它畫出來。",
+      ],
+      needLose: [
+        "差一點點也是進展，身體正在慢慢聽懂你的意圖。",
+        "體重像海浪有起伏，你看的是整體方向，不是某一朵浪花。",
+        "不必和別人比，你今天的曲線只屬於你。",
+        "給自己多一點睡眠與水分，有時比多餓一餐更有用。",
+        "只要持續紀錄，你就已經在做很多人做不來的事了。",
+      ],
+      belowTarget: [
+        "你已經比目標更輕，若這不符合現在的計畫，隨時可以調整目標。",
+        "數字之外，也留意力氣、心情與身體訊號，健康比體重更寬。",
+        "太輕與太重一樣需要照顧，必要時諮詢專業也很有勇氣。",
+        "目標可以改，健康優先，你永遠可以重新出發。",
+      ],
+      achieved: [
+        "已經非常非常接近目標了，這很值得為自己拍拍手。",
+        "讓人佩服的不是一次衝刺，而是你願意每天回來看看。",
+        "你真的有在照顧自己，這一點比任何數字都重要。",
+        "接下來好好維持，或為自己設下一個健康的新目標吧！",
+      ],
+      pastDate: [
+        "目標日過了也別灰心，可以微調日期或體重，再出發一次。",
+        "計畫永遠可以更新，重要的是你還在場上。",
+        "重新訂一個讓自己睡得著、吃得飽的目標也很好。",
+      ],
+      genericClose: [
+        "進步常常不是直線，而是迂迴上升，這很正常。",
+        "閉上眼睛想像達標那天，醒來後今天的你仍然可以往前一步。",
+      ],
+    };
+
+    /** @param {string[]} arr */
+    function pickEncouragement(arr) {
+      const i = Math.floor(Date.now() / 86400000) % arr.length;
+      return arr[i];
+    }
+
     const dateInput = document.getElementById("date");
     const weightInput = document.getElementById("weight");
     const saveBtn = document.getElementById("saveBtn");
@@ -289,6 +426,12 @@
     const deleteModalBackdrop = document.getElementById("deleteModalBackdrop");
     const deleteModalCancel = document.getElementById("deleteModalCancel");
     const deleteModalOk = document.getElementById("deleteModalOk");
+    const goalDateInput = document.getElementById("goalDate");
+    const goalWeightInput = document.getElementById("goalWeight");
+    const goalSaveBtn = document.getElementById("goalSaveBtn");
+    const goalClearBtn = document.getElementById("goalClearBtn");
+    const goalStatsEl = document.getElementById("goalStats");
+    const encourageLineEl = document.getElementById("encourageLine");
 
     let pendingDeleteDate = null;
 
@@ -337,6 +480,74 @@
 
     dateInput.value = todayISO();
 
+    function daysFromTodayTo(targetIso) {
+      const a = parseISODateLocal(todayISO());
+      const b = parseISODateLocal(targetIso);
+      return Math.round((b.getTime() - a.getTime()) / 86400000);
+    }
+
+    function syncGoalFormFromStorage() {
+      const g = loadGoal();
+      goalDateInput.value = g.targetDate || "";
+      goalWeightInput.value = g.targetWeight != null ? String(g.targetWeight) : "";
+    }
+
+    syncGoalFormFromStorage();
+
+    function renderGoalInsight() {
+      const goal = loadGoal();
+      const entries = loadEntries();
+
+      if (!goal.targetDate || goal.targetWeight == null) {
+        goalStatsEl.innerHTML =
+          '<p class="empty" style="padding:8px 0;margin:0;">填寫目標日期與目標體重並儲存後，這裡會顯示還差多少與倒數天數。</p>';
+        encourageLineEl.textContent = pickEncouragement(ENC.noGoal);
+        return;
+      }
+
+      const remain = daysFromTodayTo(goal.targetDate);
+      let dayHtml = "";
+      if (remain > 0) {
+        dayHtml = `<p>距離目標日（${goal.targetDate}）還有 <span class="highlight">${remain}</span> 天。</p>`;
+      } else if (remain === 0) {
+        dayHtml = `<p>目標日就是<span class="highlight">今天</span>（${goal.targetDate}）。</p>`;
+      } else {
+        dayHtml = `<p>目標日（${goal.targetDate}）已過 <span class="highlight">${-remain}</span> 天。</p>`;
+      }
+
+      const latest = getLatestEntry(entries);
+      let weightHtml = "";
+      /** @type {string[]} */
+      let encPool = ENC.genericClose;
+
+      if (!latest) {
+        weightHtml = "<p>尚無體重紀錄，先記幾筆後就能看到與目標的距離。</p>";
+        encPool = ENC.noEntry;
+      } else {
+        const cur = latest.weight;
+        const diff = cur - goal.targetWeight;
+        const abs = Math.abs(diff);
+        if (abs < 0.2) {
+          weightHtml = `<p>最近一筆：<strong>${cur.toFixed(1)} kg</strong>（${latest.date}），與目標 <strong>${goal.targetWeight.toFixed(1)} kg</strong> 幾乎一樣。</p>`;
+          encPool = ENC.achieved;
+        } else if (diff > 0) {
+          weightHtml = `<p>最近一筆：<strong>${cur.toFixed(1)} kg</strong>（${latest.date}）。<br>與目標體重相比，還多出 <span class="highlight">${abs.toFixed(1)} kg</span>。</p>`;
+          encPool = ENC.needLose;
+        } else {
+          weightHtml = `<p>最近一筆：<strong>${cur.toFixed(1)} kg</strong>（${latest.date}）。<br>已比目標再輕約 <span class="highlight">${abs.toFixed(1)} kg</span>。</p>`;
+          encPool = ENC.belowTarget;
+        }
+      }
+
+      if (remain < 0 && latest) {
+        const diff = latest.weight - goal.targetWeight;
+        if (Math.abs(diff) >= 0.2) encPool = ENC.pastDate;
+      }
+
+      goalStatsEl.innerHTML = dayHtml + weightHtml;
+      encourageLineEl.textContent = pickEncouragement(encPool);
+    }
+
     let chartInstance = null;
 
     function showToast(msg) {
@@ -370,6 +581,8 @@
       const sorted = sortByDate(entries);
       const labels = sorted.map((e) => e.date);
       const data = sorted.map((e) => e.weight);
+      const goal = loadGoal();
+      const showTargetLine = goal.targetWeight != null && labels.length > 0;
 
       if (chartInstance) {
         chartInstance.destroy();
@@ -385,23 +598,38 @@
         return;
       }
 
+      const datasets = [
+        {
+          label: "體重 (kg)",
+          data,
+          borderColor: "#0d9488",
+          backgroundColor: "rgba(13, 148, 136, 0.12)",
+          fill: true,
+          tension: 0.25,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 2,
+        },
+      ];
+      if (showTargetLine && goal.targetWeight != null) {
+        datasets.push({
+          label: "目標體重",
+          data: labels.map(() => goal.targetWeight),
+          borderColor: "#ea580c",
+          backgroundColor: "transparent",
+          borderDash: [6, 4],
+          pointRadius: 0,
+          fill: false,
+          tension: 0,
+          borderWidth: 2,
+        });
+      }
+
       chartInstance = new Chart(chartCanvas, {
         type: "line",
         data: {
           labels,
-          datasets: [
-            {
-              label: "體重 (kg)",
-              data,
-              borderColor: "#0d9488",
-              backgroundColor: "rgba(13, 148, 136, 0.12)",
-              fill: true,
-              tension: 0.25,
-              pointRadius: 4,
-              pointHoverRadius: 6,
-              borderWidth: 2,
-            },
-          ],
+          datasets,
         },
         options: {
           responsive: true,
@@ -419,7 +647,7 @@
             },
           },
           plugins: {
-            legend: { display: false },
+            legend: { display: showTargetLine },
             tooltip: {
               callbacks: {
                 label(ctx) {
@@ -437,7 +665,32 @@
       const entries = loadEntries();
       renderList(entries);
       renderChart(entries);
+      renderGoalInsight();
     }
+
+    goalSaveBtn.addEventListener("click", () => {
+      const td = goalDateInput.value;
+      const tw = parseFloat(String(goalWeightInput.value).replace(",", "."));
+      if (!td) {
+        showToast("請選擇目標日期");
+        return;
+      }
+      if (Number.isNaN(tw) || tw <= 0) {
+        showToast("請輸入有效目標體重");
+        return;
+      }
+      saveGoal({ targetDate: td, targetWeight: tw });
+      showToast("目標已儲存");
+      refresh();
+    });
+
+    goalClearBtn.addEventListener("click", () => {
+      saveGoal({ targetDate: null, targetWeight: null });
+      goalDateInput.value = "";
+      goalWeightInput.value = "";
+      showToast("已清除目標");
+      refresh();
+    });
 
     saveBtn.addEventListener("click", () => {
       const date = dateInput.value;
