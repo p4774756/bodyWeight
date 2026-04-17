@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0f766e" />
-  <title>每日體重</title>
+  <title>體重與打卡</title>
   <style>
     :root {
       --bg: #f0fdfa;
@@ -25,15 +25,15 @@
       min-height: 100dvh;
       background: var(--bg);
       color: var(--text);
-      padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+      padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) calc(88px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     }
-    h1 {
+    .app-header h1 {
       font-size: 1.35rem;
       font-weight: 700;
       margin: 0 0 4px;
       letter-spacing: -0.02em;
     }
-    .subtitle { color: var(--muted); font-size: 0.875rem; margin-bottom: 20px; }
+    .app-header .subtitle { color: var(--muted); font-size: 0.875rem; margin: 0 0 20px; }
     .card {
       background: var(--surface);
       border-radius: var(--radius);
@@ -151,10 +151,105 @@
       touch-action: manipulation;
     }
     .empty { color: var(--muted); font-size: 0.9rem; text-align: center; padding: 20px 8px; }
+    .tabbar {
+      position: fixed;
+      z-index: 40;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding-bottom: env(safe-area-inset-bottom);
+      box-shadow: 0 -6px 24px rgba(15, 118, 110, 0.07);
+    }
+    .tabbar-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 10px 8px 12px;
+      border: none;
+      background: transparent;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--muted);
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .tabbar-btn[aria-selected="true"] {
+      color: var(--accent);
+    }
+    .tabbar-icon {
+      font-size: 1.35rem;
+      line-height: 1;
+    }
+    .checkin-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 4px;
+    }
+    .checkin-btn {
+      min-height: 92px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 14px 10px;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+      touch-action: manipulation;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+    .checkin-btn:active { transform: scale(0.97); }
+    .checkin-btn-gym { background: linear-gradient(145deg, #dbeafe, #bfdbfe); }
+    .checkin-btn-jog { background: linear-gradient(145deg, #d1fae5, #a7f3d0); }
+    .checkin-btn-friends { background: linear-gradient(145deg, #fef3c7, #fde68a); }
+    .checkin-btn-partner { background: linear-gradient(145deg, #fce7f3, #fbcfe8); }
+    .checkin-emoji { font-size: 1.5rem; line-height: 1; }
+    .checkin-label { text-align: center; line-height: 1.25; }
+    .checkin-analytics { font-size: 0.9rem; line-height: 1.55; margin-bottom: 14px; }
+    .checkin-analytics .ana-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .checkin-analytics .ana-row:last-child { border-bottom: none; }
+    .checkin-analytics .ana-name { font-weight: 600; flex-shrink: 0; }
+    .checkin-analytics .ana-meta { color: var(--muted); text-align: right; font-size: 0.82rem; }
+    .checkin-subh {
+      font-size: 0.85rem;
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .checkin-chart-wrap { height: 200px; margin-top: 4px; }
+    .checkin-log {
+      font-size: 0.88rem;
+      color: var(--muted);
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .checkin-log:last-child { border-bottom: none; }
+    .checkin-log strong { color: var(--text); }
     .toast {
       position: fixed;
       left: 50%;
-      bottom: max(24px, env(safe-area-inset-bottom));
+      bottom: calc(88px + env(safe-area-inset-bottom));
       transform: translateX(-50%) translateY(120px);
       background: var(--text);
       color: #fff;
@@ -235,9 +330,13 @@
   </style>
 </head>
 <body>
-  <h1>每日體重</h1>
-  <p class="subtitle">資料存在這台裝置上，不會上傳伺服器</p>
+  <header class="app-header">
+    <h1 id="appTitle">每日體重</h1>
+    <p id="appSubtitle" class="subtitle">資料存在這台裝置上，不會上傳伺服器</p>
+  </header>
 
+  <main class="app-main">
+  <section id="viewWeight" class="app-view" role="tabpanel" aria-labelledby="tabWeight">
   <div class="card">
     <div class="list-header">
       <h2>目標與進度</h2>
@@ -286,6 +385,45 @@
     </div>
     <div id="list"></div>
   </div>
+  </section>
+
+  <section id="viewCheckin" class="app-view" role="tabpanel" aria-labelledby="tabCheckin" hidden>
+    <div class="card">
+      <div class="list-header">
+        <h2>一鍵打卡</h2>
+      </div>
+      <p class="subtitle" style="margin-top:0">按一下立刻記錄此刻（同一天可多次）</p>
+      <div class="checkin-grid" id="checkinGrid"></div>
+    </div>
+    <div class="card">
+      <div class="list-header">
+        <h2>頻率與分析</h2>
+      </div>
+      <div id="checkinAnalytics" class="checkin-analytics"></div>
+      <h3 class="checkin-subh">近 7 天各項次數</h3>
+      <div class="chart-wrap checkin-chart-wrap">
+        <canvas id="checkinChart" aria-label="近七天打卡次數"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="list-header">
+        <h2>最近紀錄</h2>
+      </div>
+      <div id="checkinRecent"></div>
+    </div>
+  </section>
+  </main>
+
+  <nav class="tabbar" role="tablist" aria-label="主選單">
+    <button type="button" class="tabbar-btn" role="tab" id="tabWeight" aria-controls="viewWeight" aria-selected="true">
+      <span class="tabbar-icon" aria-hidden="true">⚖️</span>
+      <span>體重</span>
+    </button>
+    <button type="button" class="tabbar-btn" role="tab" id="tabCheckin" aria-controls="viewCheckin" aria-selected="false">
+      <span class="tabbar-icon" aria-hidden="true">✅</span>
+      <span>打卡</span>
+    </button>
+  </nav>
 
   <div class="toast" id="toast" role="status"></div>
 
@@ -305,6 +443,13 @@
   <script>
     const STORAGE_KEY = "bodyWeight.entries.v1";
     const GOAL_KEY = "bodyWeight.goal.v1";
+    const CHECKIN_KEY = "bodyWeight.checkins.v1";
+    const CHECK_KINDS = [
+      { id: "gym", label: "重訓", emoji: "🏋️" },
+      { id: "jog", label: "慢跑", emoji: "🏃" },
+      { id: "friends", label: "看六人行", emoji: "📺" },
+      { id: "partner", label: "跟女友做愛", emoji: "💕" },
+    ];
 
     /** @typedef {{ date: string, weight: number }} Entry */
     /** @typedef {{ targetDate: string | null, targetWeight: number | null }} Goal */
@@ -352,6 +497,26 @@
     /** @param {Goal} goal */
     function saveGoal(goal) {
       localStorage.setItem(GOAL_KEY, JSON.stringify(goal));
+    }
+
+    function loadCheckins() {
+      try {
+        const raw = localStorage.getItem(CHECKIN_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        const valid = new Set(CHECK_KINDS.map((k) => k.id));
+        return parsed
+          .filter((c) => c && typeof c.ts === "number" && typeof c.kind === "string" && valid.has(c.kind))
+          .map((c) => ({ ts: c.ts, kind: c.kind }));
+      } catch {
+        return [];
+      }
+    }
+
+    /** @param {{ ts: number, kind: string }[]} rows */
+    function saveCheckins(rows) {
+      localStorage.setItem(CHECKIN_KEY, JSON.stringify(rows.slice(-5000)));
     }
 
     function parseISODateLocal(iso) {
@@ -415,6 +580,22 @@
       return arr[i];
     }
 
+    function kindLabel(kind) {
+      const k = CHECK_KINDS.find((x) => x.id === kind);
+      return k ? k.label : kind;
+    }
+
+    function localDayKey(ts) {
+      const d = new Date(ts);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+
+    /** @param {{ ts: number, kind: string }[]} checkins */
+    function filterSinceDays(checkins, days) {
+      const cutoff = Date.now() - days * 86400000;
+      return checkins.filter((c) => c.ts >= cutoff);
+    }
+
     const dateInput = document.getElementById("date");
     const weightInput = document.getElementById("weight");
     const saveBtn = document.getElementById("saveBtn");
@@ -432,6 +613,16 @@
     const goalClearBtn = document.getElementById("goalClearBtn");
     const goalStatsEl = document.getElementById("goalStats");
     const encourageLineEl = document.getElementById("encourageLine");
+    const tabWeight = document.getElementById("tabWeight");
+    const tabCheckin = document.getElementById("tabCheckin");
+    const viewWeight = document.getElementById("viewWeight");
+    const viewCheckin = document.getElementById("viewCheckin");
+    const appTitle = document.getElementById("appTitle");
+    const appSubtitle = document.getElementById("appSubtitle");
+    const checkinGrid = document.getElementById("checkinGrid");
+    const checkinAnalytics = document.getElementById("checkinAnalytics");
+    const checkinRecent = document.getElementById("checkinRecent");
+    const checkinCanvas = document.getElementById("checkinChart");
 
     let pendingDeleteDate = null;
 
@@ -549,6 +740,7 @@
     }
 
     let chartInstance = null;
+    let checkinChartInstance = null;
 
     function showToast(msg) {
       toastEl.textContent = msg;
@@ -725,6 +917,134 @@
       openDeleteModal(date);
     });
 
+    function renderCheckinPanel() {
+      const all = loadCheckins();
+      const c7 = filterSinceDays(all, 7);
+      const c30 = filterSinceDays(all, 30);
+
+      const counts7 = CHECK_KINDS.map((k) => c7.filter((c) => c.kind === k.id).length);
+      const counts30 = CHECK_KINDS.map((k) => c30.filter((c) => c.kind === k.id).length);
+      const totalAll = CHECK_KINDS.map((k) => all.filter((c) => c.kind === k.id).length);
+
+      let html = "";
+      CHECK_KINDS.forEach((k, i) => {
+        const activeDays7 = new Set(c7.filter((c) => c.kind === k.id).map((c) => localDayKey(c.ts))).size;
+        const perWeek = (counts30[i] / (30 / 7)).toFixed(1);
+        html += `<div class="ana-row"><span class="ana-name">${k.emoji} ${k.label}</span><span class="ana-meta">近7天 ${counts7[i]} 次 · ${activeDays7} 天有做<br>近30天 ${counts30[i]} 次 · 約每週 ${perWeek} 次<br>累計 ${totalAll[i]} 次</span></div>`;
+      });
+
+      const sum7 = counts7.reduce((a, b) => a + b, 0);
+      if (sum7 === 0) {
+        html += '<p class="empty" style="padding:8px 0;margin:0;">近 7 天尚無打卡，按上方按鈕開始吧。</p>';
+      } else {
+        const bestIdx = counts7.indexOf(Math.max(...counts7));
+        html += `<p style="margin:12px 0 0;font-size:0.88rem;color:var(--muted);">近一週以「<strong style="color:var(--text)">${CHECK_KINDS[bestIdx].label}</strong>」最多次（${counts7[bestIdx]} 次）。</p>`;
+      }
+      checkinAnalytics.innerHTML = html;
+
+      if (checkinChartInstance) {
+        checkinChartInstance.destroy();
+        checkinChartInstance = null;
+      }
+      checkinChartInstance = new Chart(checkinCanvas, {
+        type: "bar",
+        data: {
+          labels: CHECK_KINDS.map((k) => k.label),
+          datasets: [
+            {
+              label: "近 7 天次數",
+              data: counts7,
+              backgroundColor: ["#60a5fa", "#34d399", "#fbbf24", "#f472b6"],
+              borderRadius: 6,
+              borderSkipped: false,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: "y",
+          scales: {
+            x: {
+              beginAtZero: true,
+              ticks: { stepSize: 1, precision: 0 },
+              grid: { color: "rgba(20, 78, 74, 0.08)" },
+            },
+            y: { grid: { display: false }, ticks: { font: { size: 11 } } },
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label(ctx) {
+                  const v = ctx.parsed.x;
+                  return v != null ? `${v} 次` : "";
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const recent = [...all].sort((a, b) => b.ts - a.ts).slice(0, 25);
+      if (recent.length === 0) {
+        checkinRecent.innerHTML = '<p class="empty">尚無紀錄</p>';
+      } else {
+        const fmt = new Intl.DateTimeFormat("zh-Hant", {
+          month: "numeric",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        checkinRecent.innerHTML = recent
+          .map((c) => {
+            const lab = kindLabel(c.kind);
+            return `<div class="checkin-log"><strong>${lab}</strong><span>${fmt.format(c.ts)}</span></div>`;
+          })
+          .join("");
+      }
+    }
+
+    function initCheckinGrid() {
+      checkinGrid.innerHTML = CHECK_KINDS.map(
+        (k) =>
+          `<button type="button" class="checkin-btn checkin-btn-${k.id}" data-kind="${k.id}"><span class="checkin-emoji">${k.emoji}</span><span class="checkin-label">${k.label}</span></button>`
+      ).join("");
+      checkinGrid.addEventListener("click", (ev) => {
+        const btn = ev.target.closest(".checkin-btn[data-kind]");
+        if (!btn) return;
+        const kind = btn.getAttribute("data-kind");
+        if (!kind) return;
+        const rows = loadCheckins();
+        rows.push({ ts: Date.now(), kind });
+        saveCheckins(rows);
+        showToast(`已打卡：${kindLabel(kind)}`);
+        renderCheckinPanel();
+      });
+    }
+
+    function switchMainTab(which) {
+      const onWeight = which === "weight";
+      viewWeight.hidden = !onWeight;
+      viewCheckin.hidden = onWeight;
+      tabWeight.setAttribute("aria-selected", onWeight ? "true" : "false");
+      tabCheckin.setAttribute("aria-selected", onWeight ? "false" : "true");
+      if (onWeight) {
+        appTitle.textContent = "每日體重";
+        appSubtitle.textContent = "資料存在這台裝置上，不會上傳伺服器";
+      } else {
+        appTitle.textContent = "習慣打卡";
+        appSubtitle.textContent = "打卡資料僅存在此裝置，可在此查看頻率與紀錄";
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => renderCheckinPanel());
+        });
+      }
+    }
+
+    tabWeight.addEventListener("click", () => switchMainTab("weight"));
+    tabCheckin.addEventListener("click", () => switchMainTab("checkin"));
+
+    initCheckinGrid();
     refresh();
   </script>
 </body>
