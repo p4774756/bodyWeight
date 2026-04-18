@@ -299,17 +299,6 @@
     .checkin-btn-partner { background: linear-gradient(145deg, #fce7f3, #fbcfe8); }
     .checkin-emoji { font-size: 1.5rem; line-height: 1; }
     .checkin-label { text-align: center; line-height: 1.25; }
-    .checkin-analytics { font-size: 0.9rem; line-height: 1.55; margin-bottom: 14px; }
-    .checkin-analytics .ana-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .checkin-analytics .ana-row:last-child { border-bottom: none; }
-    .checkin-analytics .ana-name { font-weight: 600; flex-shrink: 0; }
-    .checkin-analytics .ana-meta { color: var(--muted); text-align: right; font-size: 0.82rem; }
     .checkin-subh {
       font-size: 0.85rem;
       margin: 0 0 8px;
@@ -317,6 +306,8 @@
       font-weight: 600;
     }
     .checkin-chart-wrap { height: 200px; margin-top: 4px; }
+    .checkin-chart-stack { height: 240px; margin-top: 4px; }
+    .checkin-chart-pie { height: 220px; margin-top: 4px; max-width: 320px; margin-left: auto; margin-right: auto; }
     .checkin-log {
       font-size: 0.88rem;
       color: var(--muted);
@@ -548,10 +539,21 @@
       <div class="list-header">
         <h2>頻率與分析</h2>
       </div>
-      <div id="checkinAnalytics" class="checkin-analytics"></div>
-      <h3 class="checkin-subh">近 7 天各項次數</h3>
-      <div class="chart-wrap checkin-chart-wrap">
-        <canvas id="checkinChart" aria-label="近七天打卡次數"></canvas>
+      <p class="subtitle" style="margin-top:0">皆以圖表呈現</p>
+      <p id="checkinChartEmpty" class="empty" style="padding:12px 0;margin:0;display:none;">尚無打卡資料，請先使用上方一鍵打卡。</p>
+      <div id="checkinChartsBlock">
+        <h3 class="checkin-subh">近 7 天 · 各項次數</h3>
+        <div class="chart-wrap checkin-chart-wrap">
+          <canvas id="checkinChartBar7" aria-label="近七天各項打卡次數"></canvas>
+        </div>
+        <h3 class="checkin-subh">近 30 天 · 每日次數（堆疊）</h3>
+        <div class="chart-wrap checkin-chart-stack">
+          <canvas id="checkinChartStack30" aria-label="近三十天每日打卡堆疊圖"></canvas>
+        </div>
+        <h3 class="checkin-subh">近 30 天 · 類型占比</h3>
+        <div class="chart-wrap checkin-chart-pie">
+          <canvas id="checkinChartPie30" aria-label="近三十天打卡類型占比"></canvas>
+        </div>
       </div>
     </div>
     <details class="card list-fold">
@@ -798,6 +800,28 @@
       return checkins.filter((c) => c.ts >= cutoff);
     }
 
+    const CHECKIN_CHART_COLORS = ["#60a5fa", "#34d399", "#fbbf24", "#f472b6"];
+
+    function lastNDaysIso(n) {
+      const out = [];
+      const end = new Date();
+      end.setHours(0, 0, 0, 0);
+      for (let i = n - 1; i >= 0; i--) {
+        const d = new Date(end);
+        d.setDate(d.getDate() - i);
+        out.push(
+          `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+        );
+      }
+      return out;
+    }
+
+    function countKindInDay(checkins, iso, kindId) {
+      const t0 = parseISODateLocal(iso).getTime();
+      const t1 = t0 + 86400000;
+      return checkins.filter((c) => c.kind === kindId && c.ts >= t0 && c.ts < t1).length;
+    }
+
     const dateInput = document.getElementById("date");
     const weightInput = document.getElementById("weight");
     const saveBtn = document.getElementById("saveBtn");
@@ -825,11 +849,14 @@
     const appTitle = document.getElementById("appTitle");
     const appSubtitle = document.getElementById("appSubtitle");
     const checkinGrid = document.getElementById("checkinGrid");
-    const checkinAnalytics = document.getElementById("checkinAnalytics");
     const checkinRecent = document.getElementById("checkinRecent");
     const checkinRecentMeta = document.getElementById("checkinRecentMeta");
     const checkinRecentNote = document.getElementById("checkinRecentNote");
-    const checkinCanvas = document.getElementById("checkinChart");
+    const checkinCanvasBar7 = document.getElementById("checkinChartBar7");
+    const checkinCanvasStack30 = document.getElementById("checkinChartStack30");
+    const checkinCanvasPie30 = document.getElementById("checkinChartPie30");
+    const checkinChartEmpty = document.getElementById("checkinChartEmpty");
+    const checkinChartsBlock = document.getElementById("checkinChartsBlock");
     const settingsModal = document.getElementById("settingsModal");
     const settingsModalBackdrop = document.getElementById("settingsModalBackdrop");
     const settingsCloseBtn = document.getElementById("settingsCloseBtn");
@@ -1018,7 +1045,24 @@
     }
 
     let chartInstance = null;
-    let checkinChartInstance = null;
+    let checkinBar7 = null;
+    let checkinStack30 = null;
+    let checkinPie30 = null;
+
+    function destroyCheckinCharts() {
+      if (checkinBar7) {
+        checkinBar7.destroy();
+        checkinBar7 = null;
+      }
+      if (checkinStack30) {
+        checkinStack30.destroy();
+        checkinStack30 = null;
+      }
+      if (checkinPie30) {
+        checkinPie30.destroy();
+        checkinPie30 = null;
+      }
+    }
 
     const UNDO_CHECKIN_MS = 6000;
     /** @type {{ ts: number, kind: string } | null} */
@@ -1242,67 +1286,171 @@
 
       const counts7 = CHECK_KINDS.map((k) => c7.filter((c) => c.kind === k.id).length);
       const counts30 = CHECK_KINDS.map((k) => c30.filter((c) => c.kind === k.id).length);
-      const totalAll = CHECK_KINDS.map((k) => all.filter((c) => c.kind === k.id).length);
+      const pieTotal = counts30.reduce((a, b) => a + b, 0);
 
-      let html = "";
-      CHECK_KINDS.forEach((k, i) => {
-        const activeDays7 = new Set(c7.filter((c) => c.kind === k.id).map((c) => localDayKey(c.ts))).size;
-        const perWeek = (counts30[i] / (30 / 7)).toFixed(1);
-        html += `<div class="ana-row"><span class="ana-name">${k.emoji} ${k.label}</span><span class="ana-meta">近7天 ${counts7[i]} 次 · ${activeDays7} 天有做<br>近30天 ${counts30[i]} 次 · 約每週 ${perWeek} 次<br>累計 ${totalAll[i]} 次</span></div>`;
-      });
-
-      const sum7 = counts7.reduce((a, b) => a + b, 0);
-      if (sum7 === 0) {
-        html += '<p class="empty" style="padding:8px 0;margin:0;">近 7 天尚無打卡，按上方按鈕開始吧。</p>';
+      if (all.length === 0) {
+        destroyCheckinCharts();
+        checkinChartEmpty.style.display = "block";
+        checkinChartsBlock.style.display = "none";
       } else {
-        const bestIdx = counts7.indexOf(Math.max(...counts7));
-        html += `<p style="margin:12px 0 0;font-size:0.88rem;color:var(--muted);">近一週以「<strong style="color:var(--text)">${CHECK_KINDS[bestIdx].label}</strong>」最多次（${counts7[bestIdx]} 次）。</p>`;
-      }
-      checkinAnalytics.innerHTML = html;
+        checkinChartEmpty.style.display = "none";
+        checkinChartsBlock.style.display = "block";
+        destroyCheckinCharts();
 
-      if (checkinChartInstance) {
-        checkinChartInstance.destroy();
-        checkinChartInstance = null;
-      }
-      checkinChartInstance = new Chart(checkinCanvas, {
-        type: "bar",
-        data: {
-          labels: CHECK_KINDS.map((k) => k.label),
-          datasets: [
-            {
-              label: "近 7 天次數",
-              data: counts7,
-              backgroundColor: ["#60a5fa", "#34d399", "#fbbf24", "#f472b6"],
-              borderRadius: 6,
-              borderSkipped: false,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          indexAxis: "y",
-          scales: {
-            x: {
-              beginAtZero: true,
-              ticks: { stepSize: 1, precision: 0 },
-              grid: { color: "rgba(20, 78, 74, 0.08)" },
-            },
-            y: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        checkinBar7 = new Chart(checkinCanvasBar7, {
+          type: "bar",
+          data: {
+            labels: CHECK_KINDS.map((k) => k.label),
+            datasets: [
+              {
+                label: "近 7 天次數",
+                data: counts7,
+                backgroundColor: CHECKIN_CHART_COLORS,
+                borderRadius: 6,
+                borderSkipped: false,
+              },
+            ],
           },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label(ctx) {
-                  const v = ctx.parsed.x;
-                  return v != null ? `${v} 次` : "";
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: "y",
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: { stepSize: 1, precision: 0 },
+                grid: { color: "rgba(20, 78, 74, 0.08)" },
+              },
+              y: { grid: { display: false }, ticks: { font: { size: 11 } } },
+            },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label(ctx) {
+                    const v = ctx.parsed.x;
+                    return v != null ? `${v} 次` : "";
+                  },
                 },
               },
             },
           },
-        },
-      });
+        });
+
+        const days30 = lastNDaysIso(30);
+        const labels30 = days30.map((iso) => {
+          const p = iso.split("-").map(Number);
+          return `${p[1]}/${p[2]}`;
+        });
+        const datasetsStack = CHECK_KINDS.map((k, i) => ({
+          label: k.emoji + " " + k.label,
+          data: days30.map((iso) => countKindInDay(c30, iso, k.id)),
+          backgroundColor: CHECKIN_CHART_COLORS[i],
+          borderWidth: 0,
+        }));
+
+        checkinStack30 = new Chart(checkinCanvasStack30, {
+          type: "bar",
+          data: {
+            labels: labels30,
+            datasets: datasetsStack,
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                stacked: true,
+                grid: { display: false },
+                ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 9 },
+              },
+              y: {
+                stacked: true,
+                beginAtZero: true,
+                ticks: { stepSize: 1, precision: 0 },
+                grid: { color: "rgba(20, 78, 74, 0.08)" },
+              },
+            },
+            plugins: {
+              legend: {
+                display: true,
+                position: "bottom",
+                labels: { boxWidth: 12, font: { size: 10 }, usePointStyle: true },
+              },
+              tooltip: {
+                mode: "index",
+                intersect: false,
+                callbacks: {
+                  footer: (items) => {
+                    if (!items.length) return "";
+                    const sum = items.reduce((s, it) => s + it.parsed.y, 0);
+                    return `當日合計 ${sum} 次`;
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        if (pieTotal === 0) {
+          checkinPie30 = new Chart(checkinCanvasPie30, {
+            type: "doughnut",
+            data: {
+              labels: ["近 30 天無次數"],
+              datasets: [
+                {
+                  data: [1],
+                  backgroundColor: ["#e2e8f0"],
+                  borderWidth: 2,
+                  borderColor: "#fff",
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false },
+              },
+            },
+          });
+        } else {
+          checkinPie30 = new Chart(checkinCanvasPie30, {
+            type: "doughnut",
+            data: {
+              labels: CHECK_KINDS.map((k) => k.label),
+              datasets: [
+                {
+                  data: counts30,
+                  backgroundColor: CHECKIN_CHART_COLORS,
+                  borderWidth: 2,
+                  borderColor: "#fff",
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  position: "bottom",
+                  labels: { boxWidth: 12, font: { size: 10 } },
+                },
+                tooltip: {
+                  callbacks: {
+                    label(ctx) {
+                      const v = Number(ctx.raw);
+                      const pct = pieTotal ? ((v / pieTotal) * 100).toFixed(1) : "0";
+                      return `${ctx.label}: ${v} 次（${pct}%）`;
+                    },
+                  },
+                },
+              },
+            },
+          });
+        }
+      }
 
       const totalN = all.length;
       checkinRecentMeta.textContent = totalN === 0 ? "尚無紀錄" : `共 ${totalN} 筆`;
