@@ -300,6 +300,9 @@
     .checkin-btn-jog { background: linear-gradient(145deg, #d1fae5, #a7f3d0); }
     .checkin-btn-friends { background: linear-gradient(145deg, #fef3c7, #fde68a); }
     .checkin-btn-partner { background: linear-gradient(145deg, #fce7f3, #fbcfe8); }
+    .checkin-btn-drink { background: linear-gradient(145deg, #e9d5ff, #d8b4fe); }
+    .checkin-btn-adult { background: linear-gradient(145deg, #fecaca, #fca5a5); }
+    .checkin-btn-bird { background: linear-gradient(145deg, #bae6fd, #7dd3fc); }
     .checkin-emoji { font-size: 1.5rem; line-height: 1; }
     .checkin-label { text-align: center; line-height: 1.25; }
     .checkin-subh {
@@ -656,6 +659,9 @@
       { id: "jog", label: "慢跑", emoji: "🏃" },
       { id: "friends", label: "看六人行", emoji: "📺" },
       { id: "partner", label: "跟女友做愛", emoji: "💕" },
+      { id: "drink", label: "喝飲料", emoji: "🥤" },
+      { id: "adult", label: "看A片", emoji: "🔞" },
+      { id: "bird", label: "玩鳥", emoji: "🐦" },
     ];
 
     /** @typedef {{ date: string, weight: number }} Entry */
@@ -803,7 +809,15 @@
       return checkins.filter((c) => c.ts >= cutoff);
     }
 
-    const CHECKIN_CHART_COLORS = ["#60a5fa", "#34d399", "#fbbf24", "#f472b6"];
+    const CHECKIN_CHART_COLORS = [
+      "#60a5fa",
+      "#34d399",
+      "#fbbf24",
+      "#f472b6",
+      "#a78bfa",
+      "#fb7185",
+      "#2dd4bf",
+    ];
 
     function lastNDaysIso(n) {
       const out = [];
