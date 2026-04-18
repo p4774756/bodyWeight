@@ -309,6 +309,7 @@
     .checkin-btn-adult { background: linear-gradient(145deg, #fecaca, #fca5a5); }
     .checkin-btn-bird { background: linear-gradient(145deg, #bae6fd, #7dd3fc); }
     .checkin-icon {
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -325,6 +326,9 @@
       object-fit: contain;
       -webkit-user-drag: none;
       user-select: none;
+      background: transparent;
+      /* 讓去背不完美的淺色底與白邊在漸層按鈕上疊上底色，不浮一塊白；與去背 PNG 並用 */
+      mix-blend-mode: multiply;
     }
     .checkin-btn:disabled .checkin-icon {
       opacity: 0.55;
@@ -690,6 +694,8 @@
     ];
 
     const CHECKIN_ICON_DIR = "assets/checkin";
+    /** 圖更換去背或檔變更時遞增，破壞手機瀏覽器/Edge 的圖片快取 */
+    const CHECKIN_ICON_VERSION = "4";
 
     /**
      * 手繪風格圖示（專案內 assets/checkin/*.png）
@@ -697,8 +703,9 @@
      * @returns {string}
      */
     function checkinIconHtml(id) {
-      const src = `${CHECKIN_ICON_DIR}/${id}.png`;
-      return `<span class="checkin-icon" aria-hidden="true"><img src="${src}" alt="" width="40" height="40" loading="lazy" decoding="async" /></span>`;
+      const q = new URLSearchParams({ v: CHECKIN_ICON_VERSION });
+      const src = `${CHECKIN_ICON_DIR}/${id}.png?${q.toString()}`;
+      return `<span class="checkin-icon" aria-hidden="true"><img src="${src}" alt="" width="40" height="40" loading="lazy" decoding="async" fetchpriority="low" /></span>`;
     }
 
     /** @typedef {{ date: string, weight: number }} Entry */
