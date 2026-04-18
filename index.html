@@ -27,6 +27,14 @@
       color: var(--text);
       padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) calc(88px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     }
+    .app-header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 0;
+    }
+    .app-header-titles { flex: 1; min-width: 0; }
     .app-header h1 {
       font-size: 1.35rem;
       font-weight: 700;
@@ -34,6 +42,22 @@
       letter-spacing: -0.02em;
     }
     .app-header .subtitle { color: var(--muted); font-size: 0.875rem; margin: 0 0 20px; }
+    .settings-btn {
+      flex-shrink: 0;
+      margin-top: 2px;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--accent);
+      cursor: pointer;
+      touch-action: manipulation;
+      box-shadow: var(--shadow);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .settings-btn:active { filter: brightness(0.97); }
     .card {
       background: var(--surface);
       border-radius: var(--radius);
@@ -278,6 +302,46 @@
       padding-bottom: max(20px, env(safe-area-inset-bottom));
     }
     .delete-modal.open { display: flex; }
+    .delete-modal.settings-modal { z-index: 210; }
+    .delete-modal-panel.settings-modal-panel {
+      max-width: 400px;
+      max-height: min(88dvh, 640px);
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      overflow: hidden;
+    }
+    .settings-modal-scroll {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+      -webkit-overflow-scrolling: touch;
+    }
+    .settings-modal-scroll .btn { margin-top: 14px; }
+    .settings-modal-lead {
+      margin: 0 0 16px;
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .settings-modal-scroll > h3 { margin: 0 0 6px; font-size: 1.1rem; }
+    .btn-close-settings {
+      width: 100%;
+      margin: 0;
+      padding: 14px 20px;
+      border: none;
+      border-top: 1px solid var(--border);
+      background: #f8faf9;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      flex-shrink: 0;
+      border-radius: 0 0 var(--radius) var(--radius);
+      touch-action: manipulation;
+    }
+    .btn-close-settings:active { background: #ecfdf5; }
     .delete-modal-backdrop {
       position: absolute;
       inset: 0;
@@ -331,32 +395,17 @@
 </head>
 <body>
   <header class="app-header">
-    <h1 id="appTitle">每日體重</h1>
-    <p id="appSubtitle" class="subtitle">資料存在這台裝置上，不會上傳伺服器</p>
+    <div class="app-header-row">
+      <div class="app-header-titles">
+        <h1 id="appTitle">每日體重</h1>
+        <p id="appSubtitle" class="subtitle">資料存在這台裝置上，不會上傳伺服器</p>
+      </div>
+      <button type="button" class="settings-btn" id="settingsBtn" aria-haspopup="dialog" aria-controls="settingsModal" aria-expanded="false">設定</button>
+    </div>
   </header>
 
   <main class="app-main">
   <section id="viewWeight" class="app-view" role="tabpanel" aria-labelledby="tabWeight">
-  <div class="card">
-    <div class="list-header">
-      <h2>目標與進度</h2>
-    </div>
-    <div class="row">
-      <div>
-        <label for="goalDate">目標日期</label>
-        <input type="date" id="goalDate" />
-      </div>
-      <div>
-        <label for="goalWeight">目標體重（公斤）</label>
-        <input type="number" id="goalWeight" inputmode="decimal" step="0.1" min="1" max="500" placeholder="例如 62" />
-      </div>
-    </div>
-    <button type="button" class="btn" id="goalSaveBtn">儲存目標</button>
-    <button type="button" class="btn-ghost" id="goalClearBtn">清除目標</button>
-    <div id="goalStats" class="goal-stats" style="margin-top:16px;"></div>
-    <p id="encourageLine" class="encourage-line" aria-live="polite"></p>
-  </div>
-
   <div class="card">
     <div class="row">
       <div>
@@ -426,6 +475,31 @@
   </nav>
 
   <div class="toast" id="toast" role="status"></div>
+
+  <div id="settingsModal" class="delete-modal settings-modal" hidden aria-hidden="true">
+    <div class="delete-modal-backdrop" id="settingsModalBackdrop" tabindex="-1"></div>
+    <div class="delete-modal-panel settings-modal-panel" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+      <div class="settings-modal-scroll">
+        <h3 id="settingsModalTitle">體重目標</h3>
+        <p class="settings-modal-lead">偶爾來調整目標或看進度即可，不必每天盯著。</p>
+        <div class="row">
+          <div>
+            <label for="goalDate">目標日期</label>
+            <input type="date" id="goalDate" />
+          </div>
+          <div>
+            <label for="goalWeight">目標體重（公斤）</label>
+            <input type="number" id="goalWeight" inputmode="decimal" step="0.1" min="1" max="500" placeholder="例如 62" />
+          </div>
+        </div>
+        <button type="button" class="btn" id="goalSaveBtn">儲存目標</button>
+        <button type="button" class="btn-ghost" id="goalClearBtn">清除目標</button>
+        <div id="goalStats" class="goal-stats" style="margin-top:16px;"></div>
+        <p id="encourageLine" class="encourage-line" aria-live="polite"></p>
+      </div>
+      <button type="button" class="btn-close-settings" id="settingsCloseBtn">關閉</button>
+    </div>
+  </div>
 
   <div id="deleteModal" class="delete-modal" hidden aria-hidden="true">
     <div class="delete-modal-backdrop" id="deleteModalBackdrop" tabindex="-1"></div>
@@ -623,8 +697,28 @@
     const checkinAnalytics = document.getElementById("checkinAnalytics");
     const checkinRecent = document.getElementById("checkinRecent");
     const checkinCanvas = document.getElementById("checkinChart");
+    const settingsModal = document.getElementById("settingsModal");
+    const settingsModalBackdrop = document.getElementById("settingsModalBackdrop");
+    const settingsCloseBtn = document.getElementById("settingsCloseBtn");
+    const settingsBtn = document.getElementById("settingsBtn");
 
     let pendingDeleteDate = null;
+
+    function openSettingsModal() {
+      settingsModal.hidden = false;
+      settingsModal.classList.add("open");
+      settingsModal.setAttribute("aria-hidden", "false");
+      settingsBtn.setAttribute("aria-expanded", "true");
+      syncGoalFormFromStorage();
+      renderGoalInsight();
+    }
+
+    function closeSettingsModal() {
+      settingsModal.classList.remove("open");
+      settingsModal.hidden = true;
+      settingsModal.setAttribute("aria-hidden", "true");
+      settingsBtn.setAttribute("aria-expanded", "false");
+    }
 
     function openDeleteModal(date) {
       pendingDeleteDate = date;
@@ -654,10 +748,19 @@
     deleteModalCancel.addEventListener("click", closeDeleteModal);
     deleteModalBackdrop.addEventListener("click", closeDeleteModal);
     deleteModalOk.addEventListener("click", runPendingDelete);
+    settingsBtn.addEventListener("click", openSettingsModal);
+    settingsModalBackdrop.addEventListener("click", closeSettingsModal);
+    settingsCloseBtn.addEventListener("click", closeSettingsModal);
     document.addEventListener("keydown", (ev) => {
-      if (ev.key === "Escape" && deleteModal.classList.contains("open")) {
+      if (ev.key !== "Escape") return;
+      if (deleteModal.classList.contains("open")) {
         ev.preventDefault();
         closeDeleteModal();
+        return;
+      }
+      if (settingsModal.classList.contains("open")) {
+        ev.preventDefault();
+        closeSettingsModal();
       }
     });
 
