@@ -349,6 +349,47 @@
       transform: translateX(-50%) translateY(0);
       opacity: 1;
     }
+    .undo-toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(88px + env(safe-area-inset-bottom));
+      transform: translateX(-50%) translateY(120px);
+      background: var(--text);
+      color: #fff;
+      padding: 10px 12px 10px 18px;
+      border-radius: 999px;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: calc(100vw - 32px);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+      z-index: 11;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+    }
+    .undo-toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .undo-toast-msg { flex: 1; min-width: 0; line-height: 1.35; }
+    .undo-toast-btn {
+      flex-shrink: 0;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .undo-toast-btn:active {
+      background: rgba(255, 255, 255, 0.28);
+    }
     .delete-modal {
       position: fixed;
       inset: 0;
@@ -500,7 +541,7 @@
       <div class="list-header">
         <h2>一鍵打卡</h2>
       </div>
-      <p class="subtitle" style="margin-top:0">按一下立刻記錄此刻（同一天可多次）</p>
+      <p class="subtitle" style="margin-top:0">按一下立刻記錄此刻（同一天可多次）。誤觸可在底部深色橫條點「復原」（約 6 秒內）。</p>
       <div class="checkin-grid" id="checkinGrid"></div>
     </div>
     <div class="card">
@@ -534,6 +575,11 @@
   </nav>
 
   <div class="toast" id="toast" role="status"></div>
+
+  <div id="undoToast" class="undo-toast" role="status" aria-live="polite" aria-atomic="true" hidden>
+    <span class="undo-toast-msg" id="undoToastMsg"></span>
+    <button type="button" class="undo-toast-btn" id="undoToastBtn">復原</button>
+  </div>
 
   <div id="entryModal" class="delete-modal entry-modal" hidden aria-hidden="true">
     <div class="delete-modal-backdrop" id="entryModalBackdrop" tabindex="-1"></div>
@@ -753,6 +799,9 @@
     const saveBtn = document.getElementById("saveBtn");
     const listEl = document.getElementById("list");
     const toastEl = document.getElementById("toast");
+    const undoToast = document.getElementById("undoToast");
+    const undoToastMsg = document.getElementById("undoToastMsg");
+    const undoToastBtn = document.getElementById("undoToastBtn");
     const chartCanvas = document.getElementById("chart");
     const deleteModal = document.getElementById("deleteModal");
     const deleteModalMsg = document.getElementById("deleteModalMsg");
@@ -964,7 +1013,33 @@
     let chartInstance = null;
     let checkinChartInstance = null;
 
+    const UNDO_CHECKIN_MS = 6000;
+    /** @type {{ ts: number, kind: string } | null} */
+    let pendingUndoCheckin = null;
+    let undoCheckinTimer = null;
+
+    function hideUndoCheckinToast() {
+      undoToast.classList.remove("show");
+      undoToast.setAttribute("hidden", "");
+      undoToast.setAttribute("aria-hidden", "true");
+      clearTimeout(undoCheckinTimer);
+      undoCheckinTimer = null;
+      pendingUndoCheckin = null;
+    }
+
+    function showUndoCheckinToast(ts, kind) {
+      clearTimeout(undoCheckinTimer);
+      toastEl.classList.remove("show");
+      pendingUndoCheckin = { ts, kind };
+      undoToastMsg.textContent = `已打卡：${kindLabel(kind)}`;
+      undoToast.removeAttribute("hidden");
+      undoToast.setAttribute("aria-hidden", "false");
+      undoToast.classList.add("show");
+      undoCheckinTimer = setTimeout(() => hideUndoCheckinToast(), UNDO_CHECKIN_MS);
+    }
+
     function showToast(msg) {
+      hideUndoCheckinToast();
       toastEl.textContent = msg;
       toastEl.classList.add("show");
       clearTimeout(showToast._t);
@@ -1251,13 +1326,30 @@
         if (!btn) return;
         const kind = btn.getAttribute("data-kind");
         if (!kind) return;
+        const ts = Date.now();
         const rows = loadCheckins();
-        rows.push({ ts: Date.now(), kind });
+        rows.push({ ts, kind });
         saveCheckins(rows);
-        showToast(`已打卡：${kindLabel(kind)}`);
+        showUndoCheckinToast(ts, kind);
         renderCheckinPanel();
       });
     }
+
+    undoToastBtn.addEventListener("click", () => {
+      if (!pendingUndoCheckin) return;
+      const { ts, kind } = pendingUndoCheckin;
+      const rows = loadCheckins();
+      for (let i = rows.length - 1; i >= 0; i--) {
+        if (rows[i].ts === ts && rows[i].kind === kind) {
+          rows.splice(i, 1);
+          break;
+        }
+      }
+      saveCheckins(rows);
+      hideUndoCheckinToast();
+      showToast("已取消該次打卡");
+      renderCheckinPanel();
+    });
 
     function switchMainTab(which) {
       const onWeight = which === "weight";
