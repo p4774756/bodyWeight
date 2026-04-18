@@ -554,12 +554,16 @@
         <canvas id="checkinChart" aria-label="近七天打卡次數"></canvas>
       </div>
     </div>
-    <div class="card">
-      <div class="list-header">
-        <h2>最近紀錄</h2>
+    <details class="card list-fold">
+      <summary class="list-fold-summary">
+        <span>最近紀錄</span>
+        <span class="list-fold-meta" id="checkinRecentMeta">共 0 筆</span>
+      </summary>
+      <div class="list-fold-inner">
+        <div id="checkinRecent"></div>
+        <p class="list-fold-note" id="checkinRecentNote" hidden></p>
       </div>
-      <div id="checkinRecent"></div>
-    </div>
+    </details>
   </section>
   </main>
 
@@ -823,6 +827,8 @@
     const checkinGrid = document.getElementById("checkinGrid");
     const checkinAnalytics = document.getElementById("checkinAnalytics");
     const checkinRecent = document.getElementById("checkinRecent");
+    const checkinRecentMeta = document.getElementById("checkinRecentMeta");
+    const checkinRecentNote = document.getElementById("checkinRecentNote");
     const checkinCanvas = document.getElementById("checkinChart");
     const settingsModal = document.getElementById("settingsModal");
     const settingsModalBackdrop = document.getElementById("settingsModalBackdrop");
@@ -1298,9 +1304,13 @@
         },
       });
 
+      const totalN = all.length;
+      checkinRecentMeta.textContent = totalN === 0 ? "尚無紀錄" : `共 ${totalN} 筆`;
+
       const recent = [...all].sort((a, b) => b.ts - a.ts).slice(0, 25);
       if (recent.length === 0) {
         checkinRecent.innerHTML = '<p class="empty">尚無紀錄</p>';
+        checkinRecentNote.hidden = true;
       } else {
         const fmt = new Intl.DateTimeFormat("zh-Hant", {
           month: "numeric",
@@ -1314,6 +1324,12 @@
             return `<div class="checkin-log"><strong>${lab}</strong><span>${fmt.format(c.ts)}</span></div>`;
           })
           .join("");
+        if (totalN > 25) {
+          checkinRecentNote.textContent = `僅列出最近 25 筆，其餘 ${totalN - 25} 筆仍保存在此裝置。`;
+          checkinRecentNote.hidden = false;
+        } else {
+          checkinRecentNote.hidden = true;
+        }
       }
     }
 
