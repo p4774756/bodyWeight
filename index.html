@@ -65,6 +65,9 @@
       gap: 8px;
       flex-shrink: 0;
     }
+    #weightHeaderActions[hidden] {
+      display: none !important;
+    }
     .entry-open-btn {
       padding: 8px 16px;
       font-size: 0.85rem;
@@ -1520,7 +1523,11 @@
       const onWeight = which === "weight";
       viewWeight.hidden = !onWeight;
       viewCheckin.hidden = onWeight;
-      weightHeaderActions.hidden = !onWeight;
+      if (onWeight) {
+        weightHeaderActions.removeAttribute("hidden");
+      } else {
+        weightHeaderActions.setAttribute("hidden", "");
+      }
       tabWeight.setAttribute("aria-selected", onWeight ? "true" : "false");
       tabCheckin.setAttribute("aria-selected", onWeight ? "false" : "true");
       if (onWeight) {
