@@ -499,7 +499,7 @@
         <h1 id="appTitle">每日體重</h1>
         <p id="appSubtitle" class="subtitle">資料存在這台裝置上，不會上傳伺服器</p>
       </div>
-      <div class="app-header-actions">
+      <div class="app-header-actions" id="weightHeaderActions">
         <button type="button" class="entry-open-btn" id="entryOpenBtn" aria-haspopup="dialog" aria-controls="entryModal" aria-expanded="false">新增</button>
         <button type="button" class="settings-btn" id="settingsBtn" aria-haspopup="dialog" aria-controls="settingsModal" aria-expanded="false">設定</button>
       </div>
@@ -836,6 +836,7 @@
     const encourageLineMainEl = document.getElementById("encourageLineMain");
     const listFoldMeta = document.getElementById("listFoldMeta");
     const listFoldNote = document.getElementById("listFoldNote");
+    const weightHeaderActions = document.getElementById("weightHeaderActions");
 
     const LIST_RECENT_MAX = 8;
 
@@ -1355,6 +1356,7 @@
       const onWeight = which === "weight";
       viewWeight.hidden = !onWeight;
       viewCheckin.hidden = onWeight;
+      weightHeaderActions.hidden = !onWeight;
       tabWeight.setAttribute("aria-selected", onWeight ? "true" : "false");
       tabCheckin.setAttribute("aria-selected", onWeight ? "false" : "true");
       if (onWeight) {
