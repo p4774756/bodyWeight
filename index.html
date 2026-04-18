@@ -295,7 +295,12 @@
       touch-action: manipulation;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     }
-    .checkin-btn:active { transform: scale(0.97); }
+    .checkin-btn:active:not(:disabled) { transform: scale(0.97); }
+    .checkin-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
     .checkin-btn-gym { background: linear-gradient(145deg, #dbeafe, #bfdbfe); }
     .checkin-btn-jog { background: linear-gradient(145deg, #d1fae5, #a7f3d0); }
     .checkin-btn-friends { background: linear-gradient(145deg, #fef3c7, #fde68a); }
@@ -303,7 +308,27 @@
     .checkin-btn-drink { background: linear-gradient(145deg, #e9d5ff, #d8b4fe); }
     .checkin-btn-adult { background: linear-gradient(145deg, #fecaca, #fca5a5); }
     .checkin-btn-bird { background: linear-gradient(145deg, #bae6fd, #7dd3fc); }
-    .checkin-emoji { font-size: 1.5rem; line-height: 1; }
+    .checkin-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      flex-shrink: 0;
+      color: var(--text);
+      opacity: 0.9;
+    }
+    .checkin-icon img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      -webkit-user-drag: none;
+      user-select: none;
+    }
+    .checkin-btn:disabled .checkin-icon {
+      opacity: 0.55;
+    }
     .checkin-label { text-align: center; line-height: 1.25; }
     .checkin-subh {
       font-size: 0.85rem;
@@ -538,7 +563,7 @@
       <div class="list-header">
         <h2>一鍵打卡</h2>
       </div>
-      <p class="subtitle" style="margin-top:0">按一下立刻記錄此刻（同一天可多次）。誤觸可在底部深色橫條點「復原」（約 6 秒內）。</p>
+      <p class="subtitle" style="margin-top:0">按一下立刻記錄此刻（每個項目每天最多一次）。誤觸可在底部深色橫條點「復原」（約 6 秒內）。</p>
       <div class="checkin-grid" id="checkinGrid"></div>
     </div>
     <div class="card">
@@ -655,14 +680,26 @@
     const GOAL_KEY = "bodyWeight.goal.v1";
     const CHECKIN_KEY = "bodyWeight.checkins.v1";
     const CHECK_KINDS = [
-      { id: "gym", label: "重訓", emoji: "🏋️" },
-      { id: "jog", label: "慢跑", emoji: "🏃" },
-      { id: "friends", label: "看六人行", emoji: "📺" },
-      { id: "partner", label: "跟女友做愛", emoji: "💕" },
-      { id: "drink", label: "喝飲料", emoji: "🥤" },
-      { id: "adult", label: "看A片", emoji: "🔞" },
-      { id: "bird", label: "玩鳥", emoji: "🐦" },
+      { id: "gym", label: "重訓" },
+      { id: "jog", label: "慢跑" },
+      { id: "friends", label: "看六人行" },
+      { id: "partner", label: "跟女友做愛" },
+      { id: "drink", label: "喝飲料" },
+      { id: "adult", label: "看A片" },
+      { id: "bird", label: "玩鳥" },
     ];
+
+    const CHECKIN_ICON_DIR = "assets/checkin";
+
+    /**
+     * 手繪風格圖示（專案內 assets/checkin/*.png）
+     * @param {string} id
+     * @returns {string}
+     */
+    function checkinIconHtml(id) {
+      const src = `${CHECKIN_ICON_DIR}/${id}.png`;
+      return `<span class="checkin-icon" aria-hidden="true"><img src="${src}" alt="" width="40" height="40" loading="lazy" decoding="async" /></span>`;
+    }
 
     /** @typedef {{ date: string, weight: number }} Entry */
     /** @typedef {{ targetDate: string | null, targetWeight: number | null }} Goal */
@@ -837,6 +874,14 @@
       const t0 = parseISODateLocal(iso).getTime();
       const t1 = t0 + 86400000;
       return checkins.filter((c) => c.kind === kindId && c.ts >= t0 && c.ts < t1).length;
+    }
+
+    /** 今日已打卡的 kind（本地日曆、每項最多一筆） */
+    function kindsCheckedInLocalToday(checkins) {
+      const todayKey = localDayKey(Date.now());
+      return new Set(
+        checkins.filter((c) => localDayKey(c.ts) === todayKey).map((c) => c.kind)
+      );
     }
 
     const dateInput = document.getElementById("date");
@@ -1296,7 +1341,17 @@
       openDeleteModal(date);
     });
 
+    function updateCheckinButtonsForToday() {
+      const done = kindsCheckedInLocalToday(loadCheckins());
+      checkinGrid.querySelectorAll(".checkin-btn[data-kind]").forEach((btn) => {
+        const k = btn.getAttribute("data-kind");
+        if (!k) return;
+        btn.disabled = done.has(k);
+      });
+    }
+
     function renderCheckinPanel() {
+      updateCheckinButtonsForToday();
       const all = loadCheckins();
       const c7 = filterSinceDays(all, 7);
       const c30 = filterSinceDays(all, 30);
@@ -1360,7 +1415,7 @@
           return `${p[1]}/${p[2]}`;
         });
         const datasetsStack = CHECK_KINDS.map((k, i) => ({
-          label: k.emoji + " " + k.label,
+          label: k.label,
           data: days30.map((iso) => countKindInDay(c30, iso, k.id)),
           backgroundColor: CHECKIN_CHART_COLORS[i],
           borderWidth: 0,
@@ -1501,20 +1556,26 @@
     function initCheckinGrid() {
       checkinGrid.innerHTML = CHECK_KINDS.map(
         (k) =>
-          `<button type="button" class="checkin-btn checkin-btn-${k.id}" data-kind="${k.id}"><span class="checkin-emoji">${k.emoji}</span><span class="checkin-label">${k.label}</span></button>`
+          `<button type="button" class="checkin-btn checkin-btn-${k.id}" data-kind="${k.id}">${checkinIconHtml(k.id)}<span class="checkin-label">${k.label}</span></button>`
       ).join("");
       checkinGrid.addEventListener("click", (ev) => {
         const btn = ev.target.closest(".checkin-btn[data-kind]");
-        if (!btn) return;
+        if (!btn || btn.disabled) return;
         const kind = btn.getAttribute("data-kind");
         if (!kind) return;
         const ts = Date.now();
+        const todayKey = localDayKey(ts);
         const rows = loadCheckins();
+        if (rows.some((c) => c.kind === kind && localDayKey(c.ts) === todayKey)) {
+          showToast("此項目今天已打過，每項每天最多一次");
+          return;
+        }
         rows.push({ ts, kind });
         saveCheckins(rows);
         showUndoCheckinToast(ts, kind);
         renderCheckinPanel();
       });
+      updateCheckinButtonsForToday();
     }
 
     undoToastBtn.addEventListener("click", () => {

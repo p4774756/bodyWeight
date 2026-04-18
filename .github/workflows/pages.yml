@@ -24,7 +24,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Prepare static files
-        run: mkdir -p _site && cp index.html _site/
+        run: |
+          mkdir -p _site/assets/checkin
+          cp index.html _site/
+          cp -r assets/checkin/* _site/assets/checkin/
 
       - uses: actions/configure-pages@v5
 
