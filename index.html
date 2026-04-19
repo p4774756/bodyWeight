@@ -60,8 +60,10 @@
     .settings-btn:active { filter: brightness(0.97); }
     .app-header-actions {
       display: flex;
-      flex-direction: column;
-      align-items: flex-end;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
       gap: 8px;
       flex-shrink: 0;
     }
@@ -305,9 +307,42 @@
     .checkin-btn-jog { background: linear-gradient(145deg, #d1fae5, #a7f3d0); }
     .checkin-btn-friends { background: linear-gradient(145deg, #fef3c7, #fde68a); }
     .checkin-btn-partner { background: linear-gradient(145deg, #fce7f3, #fbcfe8); }
-    .checkin-btn-drink { background: linear-gradient(145deg, #e9d5ff, #d8b4fe); }
-    .checkin-btn-adult { background: linear-gradient(145deg, #fecaca, #fca5a5); }
-    .checkin-btn-bird { background: linear-gradient(145deg, #bae6fd, #7dd3fc); }
+    .checkin-btn-custom {
+      background: linear-gradient(145deg, #e0e7ff, #c7d2fe);
+    }
+    .checkin-add-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+      align-items: stretch;
+    }
+    .checkin-add-row input {
+      flex: 1;
+      min-width: 120px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-size: 0.95rem;
+      background: var(--surface);
+      color: var(--text);
+    }
+    .checkin-add-row button {
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      touch-action: manipulation;
+      white-space: nowrap;
+    }
+    .checkin-add-row button:active {
+      background: var(--accent-hover);
+      transform: scale(0.98);
+    }
     .checkin-icon {
       position: relative;
       display: flex;
@@ -516,6 +551,111 @@
     .delete-modal-actions .btn-confirm-del:active {
       filter: brightness(0.92);
     }
+    .delete-modal.merge-modal { z-index: 220; }
+    .delete-modal.auth-modal { z-index: 215; }
+    .delete-modal-panel.merge-modal-panel,
+    .delete-modal-panel.auth-modal-panel {
+      max-width: 380px;
+    }
+    .merge-modal-summary {
+      font-size: 0.88rem;
+      color: var(--text);
+      line-height: 1.55;
+      margin: 0 0 14px;
+      padding: 12px 14px;
+      background: rgba(13, 148, 136, 0.06);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .merge-modal-summary strong { color: var(--accent); }
+    .auth-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .auth-tabs button {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fafafa;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--muted);
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .auth-tabs button[aria-selected="true"] {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .auth-error {
+      font-size: 0.85rem;
+      color: var(--danger);
+      margin: 0 0 10px;
+      min-height: 1.2em;
+    }
+    .auth-logged-panel {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .auth-logged-panel .auth-email-line {
+      font-weight: 700;
+      color: var(--text);
+      word-break: break-all;
+      margin-bottom: 10px;
+    }
+    .merge-actions-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .merge-actions-stack .btn-merge-local {
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      padding: 14px 16px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: 10px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .merge-actions-stack .btn-merge-cloud {
+      border: 2px solid var(--accent);
+      background: #fff;
+      color: var(--accent);
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: 10px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .merge-actions-stack button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .merge-actions-stack .btn-merge-local:active:not(:disabled) {
+      background: var(--accent-hover);
+    }
+    .merge-actions-stack .btn-merge-cloud:active:not(:disabled) {
+      background: rgba(13, 148, 136, 0.08);
+    }
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      font-size: 1.05rem;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fafafa;
+      color: var(--text);
+      -webkit-appearance: none;
+      appearance: none;
+    }
   </style>
 </head>
 <body>
@@ -525,9 +665,12 @@
         <h1 id="appTitle">每日體重</h1>
         <p id="appSubtitle" class="subtitle">資料存在這台裝置上，不會上傳伺服器</p>
       </div>
-      <div class="app-header-actions" id="weightHeaderActions">
-        <button type="button" class="entry-open-btn" id="entryOpenBtn" aria-haspopup="dialog" aria-controls="entryModal" aria-expanded="false">新增</button>
-        <button type="button" class="settings-btn" id="settingsBtn" aria-haspopup="dialog" aria-controls="settingsModal" aria-expanded="false">設定</button>
+      <div class="app-header-actions">
+        <button type="button" class="settings-btn" id="accountBtn" aria-haspopup="dialog" aria-controls="authModal" aria-expanded="false">帳號</button>
+        <div id="weightHeaderActions">
+          <button type="button" class="entry-open-btn" id="entryOpenBtn" aria-haspopup="dialog" aria-controls="entryModal" aria-expanded="false">新增</button>
+          <button type="button" class="settings-btn" id="settingsBtn" aria-haspopup="dialog" aria-controls="settingsModal" aria-expanded="false">設定</button>
+        </div>
       </div>
     </div>
   </header>
@@ -569,6 +712,10 @@
       </div>
       <p class="subtitle" style="margin-top:0">按一下立刻記錄此刻（每個項目每天最多一次）。誤觸可在底部深色橫條點「復原」（約 6 秒內）。</p>
       <div class="checkin-grid" id="checkinGrid"></div>
+      <div class="checkin-add-row">
+        <input type="text" id="checkinCustomLabel" maxlength="20" placeholder="其他習慣名稱…" enterkeyhint="done" autocomplete="off" />
+        <button type="button" id="checkinCustomAddBtn">新增項目</button>
+      </div>
     </div>
     <div class="card">
       <div class="list-header">
@@ -678,34 +825,473 @@
     </div>
   </div>
 
+  <div id="mergeModal" class="delete-modal merge-modal" hidden aria-hidden="true">
+    <div class="delete-modal-backdrop" id="mergeModalBackdrop" tabindex="-1"></div>
+    <div class="delete-modal-panel merge-modal-panel" role="dialog" aria-modal="true" aria-labelledby="mergeModalTitle">
+      <h3 id="mergeModalTitle">與雲端同步</h3>
+      <p id="mergeModalLead" class="settings-modal-lead" style="margin-top:0">請選擇要以哪一邊為準；未選的一邊會被覆蓋。</p>
+      <p id="mergeModalSummary" class="merge-modal-summary" aria-live="polite"></p>
+      <div class="merge-actions-stack">
+        <button type="button" class="btn-merge-local" id="mergePickLocal">以本機為準（覆蓋雲端）</button>
+        <button type="button" class="btn-merge-cloud" id="mergePickCloud">以雲端為準（覆蓋本機）</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="authModal" class="delete-modal auth-modal" hidden aria-hidden="true">
+    <div class="delete-modal-backdrop" id="authModalBackdrop" tabindex="-1"></div>
+    <div class="delete-modal-panel auth-modal-panel" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+      <h3 id="authModalTitle">帳號</h3>
+      <div id="authFormBlock">
+        <div class="auth-tabs" role="tablist">
+          <button type="button" role="tab" id="authTabLogin" aria-selected="true" aria-controls="authPanelLogin">登入</button>
+          <button type="button" role="tab" id="authTabRegister" aria-selected="false" aria-controls="authPanelRegister">註冊</button>
+        </div>
+        <div id="authPanelLogin" role="tabpanel" aria-labelledby="authTabLogin">
+          <label for="authEmailLogin">電子郵件</label>
+          <input type="email" id="authEmailLogin" autocomplete="email" inputmode="email" />
+          <label for="authPassLogin" style="margin-top:12px;">密碼</label>
+          <input type="password" id="authPassLogin" autocomplete="current-password" />
+        </div>
+        <div id="authPanelRegister" role="tabpanel" aria-labelledby="authTabRegister" hidden>
+          <label for="authEmailReg">電子郵件</label>
+          <input type="email" id="authEmailReg" autocomplete="email" inputmode="email" />
+          <label for="authPassReg" style="margin-top:12px;">密碼（至少 6 字元）</label>
+          <input type="password" id="authPassReg" autocomplete="new-password" />
+          <label for="authPassReg2" style="margin-top:12px;">再輸入一次密碼</label>
+          <input type="password" id="authPassReg2" autocomplete="new-password" />
+        </div>
+        <p id="authFormError" class="auth-error" aria-live="assertive"></p>
+        <button type="button" class="btn" id="authSubmitBtn">登入</button>
+      </div>
+      <div id="authLoggedBlock" hidden>
+        <div class="auth-logged-panel">
+          <div class="auth-email-line" id="authLoggedEmail"></div>
+          <p id="authCloudTimeLine" style="margin:0 0 12px;">雲端最近更新：—</p>
+          <button type="button" class="btn btn-secondary" id="authPushBtn">將本機上傳到雲端</button>
+          <button type="button" class="btn btn-secondary" id="authPullBtn">從雲端覆蓋本機</button>
+          <button type="button" class="btn-ghost" id="authSignOutBtn">登出</button>
+        </div>
+      </div>
+      <button type="button" class="btn-ghost" id="authModalCloseBtn" style="margin-top:8px;">關閉</button>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script>
     const STORAGE_KEY = "bodyWeight.entries.v1";
     const GOAL_KEY = "bodyWeight.goal.v1";
     const CHECKIN_KEY = "bodyWeight.checkins.v1";
-    const CHECK_KINDS = [
+    const CHECKIN_CUSTOM_KINDS_KEY = "bodyWeight.checkinCustomKinds.v1";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDm_1r1vvsqbuWUbWShbc5IFIRBjq6IYpk",
+      authDomain: "my-habbit-record.firebaseapp.com",
+      projectId: "my-habbit-record",
+      storageBucket: "my-habbit-record.firebasestorage.app",
+      messagingSenderId: "72425211348",
+      appId: "1:72425211348:web:68954eec17b66208dc4241",
+      measurementId: "G-EXFQFQ75H0",
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const firebaseAuth = firebase.auth();
+    const firebaseDb = firebase.firestore();
+    firebaseAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+
+    /** 寫入本機時暫停觸發雲端上傳（例如正從雲端覆蓋本機） */
+    let suppressCloudPush = false;
+    let cloudPushTimer = null;
+    let mergeChoiceResolver = null;
+
+    function bundleDocRef(uid) {
+      return firebaseDb.collection("users").doc(uid).collection("sync").doc("bundle");
+    }
+
+    /** @returns {{ entries: Entry[], goal: Goal, checkins: { ts: number, kind: string }[], checkinCustomKinds: { id: string, label: string }[] }} */
+    function collectLocalBundle() {
+      return {
+        entries: loadEntries(),
+        goal: loadGoal(),
+        checkins: loadCheckins(),
+        checkinCustomKinds: loadCustomKinds(),
+      };
+    }
+
+    function localBundleHasMeaningfulData(b) {
+      const g = b.goal;
+      const hasGoal = !!(g && g.targetDate && g.targetWeight != null);
+      return (
+        (b.entries && b.entries.length > 0) ||
+        hasGoal ||
+        (b.checkins && b.checkins.length > 0) ||
+        (b.checkinCustomKinds && b.checkinCustomKinds.length > 0)
+      );
+    }
+
+    function cloudBundleHasMeaningfulData(data) {
+      if (!data) return false;
+      const g = data.goal;
+      const hasGoal = g && typeof g.targetDate === "string" && g.targetWeight != null;
+      const entries = Array.isArray(data.entries) ? data.entries : [];
+      const checkins = Array.isArray(data.checkins) ? data.checkins : [];
+      const kinds = Array.isArray(data.checkinCustomKinds) ? data.checkinCustomKinds : [];
+      return entries.length > 0 || hasGoal || checkins.length > 0 || kinds.length > 0;
+    }
+
+    function bundlesFingerprint(b) {
+      return JSON.stringify({
+        entries: b.entries || [],
+        goal: b.goal || { targetDate: null, targetWeight: null },
+        checkins: b.checkins || [],
+        checkinCustomKinds: b.checkinCustomKinds || [],
+      });
+    }
+
+    function formatFirestoreTime(ts) {
+      if (!ts) return "—";
+      let ms;
+      if (typeof ts.toMillis === "function") ms = ts.toMillis();
+      else if (ts.seconds != null) ms = ts.seconds * 1000;
+      else return "—";
+      return new Intl.DateTimeFormat("zh-Hant", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(new Date(ms));
+    }
+
+    /** @param {firebase.firestore.DocumentSnapshot} snap */
+    function readBundleFromSnap(snap) {
+      if (!snap.exists) return null;
+      const d = snap.data();
+      return {
+        entries: Array.isArray(d.entries) ? d.entries : [],
+        goal:
+          d.goal && typeof d.goal === "object"
+            ? {
+                targetDate: typeof d.goal.targetDate === "string" ? d.goal.targetDate : null,
+                targetWeight:
+                  typeof d.goal.targetWeight === "number" && !Number.isNaN(d.goal.targetWeight) ? d.goal.targetWeight : null,
+              }
+            : { targetDate: null, targetWeight: null },
+        checkins: Array.isArray(d.checkins) ? d.checkins : [],
+        checkinCustomKinds: Array.isArray(d.checkinCustomKinds) ? d.checkinCustomKinds : [],
+        updatedAt: d.updatedAt || null,
+      };
+    }
+
+    /** @param {{ entries?: Entry[], goal?: Goal, checkins?: unknown[], checkinCustomKinds?: unknown[] }} cloud */
+    function applyCloudBundleToLocal(cloud) {
+      suppressCloudPush = true;
+      try {
+        if (Array.isArray(cloud.entries)) {
+          const cleaned = cloud.entries
+            .filter((e) => e && typeof e.date === "string" && typeof e.weight === "number")
+            .map((e) => ({ date: e.date, weight: e.weight }));
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
+        } else {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
+        }
+        const g = cloud.goal && typeof cloud.goal === "object" ? cloud.goal : {};
+        const targetDate =
+          typeof g.targetDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(g.targetDate) ? g.targetDate : null;
+        const tw = parseFloat(String(g.targetWeight ?? "").replace(",", "."));
+        const targetWeight = !Number.isNaN(tw) && tw > 0 ? tw : null;
+        localStorage.setItem(GOAL_KEY, JSON.stringify({ targetDate, targetWeight }));
+        if (Array.isArray(cloud.checkins)) {
+          const rows = cloud.checkins
+            .filter((c) => c && typeof c.ts === "number" && typeof c.kind === "string" && isValidStoredCheckinKind(c.kind))
+            .map((c) => ({ ts: c.ts, kind: c.kind.trim() }));
+          localStorage.setItem(CHECKIN_KEY, JSON.stringify(rows.slice(-5000)));
+        } else {
+          localStorage.setItem(CHECKIN_KEY, JSON.stringify([]));
+        }
+        if (Array.isArray(cloud.checkinCustomKinds)) {
+          const customs = [];
+          const seen = new Set();
+          for (const o of cloud.checkinCustomKinds) {
+            if (!o || typeof o.id !== "string" || typeof o.label !== "string") continue;
+            const id = o.id.trim();
+            const label = o.label.trim().slice(0, 20);
+            if (!id || !label) continue;
+            if (!/^c[a-z0-9]+$/i.test(id)) continue;
+            if (seen.has(id)) continue;
+            seen.add(id);
+            customs.push({ id, label });
+          }
+          localStorage.setItem(CHECKIN_CUSTOM_KINDS_KEY, JSON.stringify(customs.slice(0, CHECKIN_CUSTOM_KIND_MAX)));
+        } else {
+          localStorage.setItem(CHECKIN_CUSTOM_KINDS_KEY, JSON.stringify([]));
+        }
+      } finally {
+        suppressCloudPush = false;
+      }
+    }
+
+    async function pushLocalBundleToCloud(uid) {
+      const b = collectLocalBundle();
+      await bundleDocRef(uid).set({
+        entries: b.entries,
+        goal: b.goal,
+        checkins: b.checkins.slice(-5000),
+        checkinCustomKinds: b.checkinCustomKinds,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+
+    function scheduleCloudPushIfAuthed() {
+      const u = firebaseAuth.currentUser;
+      if (!u || suppressCloudPush) return;
+      clearTimeout(cloudPushTimer);
+      cloudPushTimer = setTimeout(() => {
+        cloudPushTimer = null;
+        pushLocalBundleToCloud(u.uid).catch((e) => {
+          console.error(e);
+          showToast("雲端同步失敗，請稍後再試");
+        });
+      }, 650);
+    }
+
+    function authErrorMessage(code) {
+      const map = {
+        "auth/email-already-in-use": "此電子郵件已被註冊",
+        "auth/invalid-email": "電子郵件格式不正確",
+        "auth/weak-password": "密碼強度不足",
+        "auth/user-not-found": "找不到此帳號",
+        "auth/wrong-password": "密碼錯誤",
+        "auth/invalid-credential": "帳號或密碼錯誤",
+        "auth/too-many-requests": "嘗試太多次，請稍後再試",
+      };
+      return map[code] || "發生錯誤，請稍後再試";
+    }
+
+    /** @returns {Promise<'local'|'cloud'>} */
+    function openMergeModalAndWait(cloudData) {
+      return new Promise((resolve) => {
+        mergeChoiceResolver = resolve;
+        const hasCloud = cloudBundleHasMeaningfulData(cloudData);
+        const localB = collectLocalBundle();
+        const hasLocal = localBundleHasMeaningfulData(localB);
+        const cloudTimeStr = cloudData && cloudData.updatedAt ? formatFirestoreTime(cloudData.updatedAt) : "尚無紀錄";
+        const same =
+          hasCloud &&
+          hasLocal &&
+          cloudData &&
+          bundlesFingerprint({
+            entries: cloudData.entries,
+            goal: cloudData.goal,
+            checkins: cloudData.checkins,
+            checkinCustomKinds: cloudData.checkinCustomKinds,
+          }) === bundlesFingerprint(localB);
+
+        const mergeModal = document.getElementById("mergeModal");
+        const mergeSummary = document.getElementById("mergeModalSummary");
+        const pickLocal = document.getElementById("mergePickLocal");
+        const pickCloud = document.getElementById("mergePickCloud");
+        const lead = document.getElementById("mergeModalLead");
+        pickLocal.disabled = false;
+        pickCloud.disabled = false;
+
+        let summaryHtml = `<strong>雲端最近更新時間：</strong>${escapeHtml(cloudTimeStr)}<br>`;
+        summaryHtml += `<strong>本機：</strong>體重 ${localB.entries.length} 筆、打卡 ${localB.checkins.length} 筆`;
+        if (same) summaryHtml += "<br><span style=\"color:var(--muted)\">（本機與雲端內容相同，仍可依需要選擇覆蓋方向）</span>";
+        mergeSummary.innerHTML = summaryHtml;
+
+        if (!hasCloud && !hasLocal) {
+          lead.textContent = "本機與雲端皆無資料，將直接繼續。";
+          pickLocal.textContent = "繼續";
+          pickCloud.textContent = "繼續";
+          pickCloud.disabled = true;
+          pickLocal.disabled = false;
+        } else if (!hasCloud) {
+          lead.textContent = "雲端尚無備份。建議將本機上傳；若仍選雲端，本機資料將被清空。";
+          pickLocal.textContent = "以本機為準（上傳到雲端）";
+          pickCloud.textContent = "以雲端為準（本機將清空）";
+        } else if (!hasLocal) {
+          lead.textContent = "本機尚無資料，建議從雲端下載。";
+          pickLocal.textContent = "以本機為準（會清空雲端）";
+          pickCloud.textContent = "以雲端為準（下載到本機）";
+        } else {
+          lead.textContent = "請選擇要以哪一邊為準；另一邊會被覆蓋。";
+          pickLocal.textContent = "以本機為準（覆蓋雲端）";
+          pickCloud.textContent = "以雲端為準（覆蓋本機）";
+          pickLocal.disabled = !hasLocal;
+          pickCloud.disabled = !hasCloud;
+        }
+
+        mergeModal.hidden = false;
+        mergeModal.classList.add("open");
+        mergeModal.setAttribute("aria-hidden", "false");
+      });
+    }
+
+    function resolveMerge(choice) {
+      const mergeModal = document.getElementById("mergeModal");
+      mergeModal.classList.remove("open");
+      mergeModal.hidden = true;
+      mergeModal.setAttribute("aria-hidden", "true");
+      const r = mergeChoiceResolver;
+      mergeChoiceResolver = null;
+      if (r) r(choice);
+    }
+
+    function closeAuthModalIfOpen() {
+      const el = document.getElementById("authModal");
+      if (!el || !el.classList.contains("open")) return;
+      el.classList.remove("open");
+      el.hidden = true;
+      el.setAttribute("aria-hidden", "true");
+      const ab = document.getElementById("accountBtn");
+      if (ab) ab.setAttribute("aria-expanded", "false");
+    }
+
+    async function runPostAuthSync(user) {
+      closeAuthModalIfOpen();
+      let snap;
+      try {
+        snap = await bundleDocRef(user.uid).get();
+      } catch (e) {
+        console.error(e);
+        showToast("無法讀取雲端，請檢查網路與規則設定");
+        return;
+      }
+      const cloudData = readBundleFromSnap(snap);
+      const choice = await openMergeModalAndWait(cloudData);
+      try {
+        if (choice === "local") {
+          await pushLocalBundleToCloud(user.uid);
+        } else if (cloudData && cloudBundleHasMeaningfulData(cloudData)) {
+          applyCloudBundleToLocal(cloudData);
+        } else {
+          applyCloudBundleToLocal({
+            entries: [],
+            goal: { targetDate: null, targetWeight: null },
+            checkins: [],
+            checkinCustomKinds: [],
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        showToast("同步失敗，請稍後再試");
+        return;
+      }
+      refresh();
+      renderCheckinGrid();
+      renderCheckinPanel();
+      syncGoalFormFromStorage();
+      showToast("同步完成");
+    }
+
+    /** 預設一鍵打卡（固定四項） */
+    const CHECK_KINDS_PRESET = [
       { id: "gym", label: "重訓" },
       { id: "jog", label: "慢跑" },
       { id: "friends", label: "看六人行" },
       { id: "partner", label: "跟女友做愛" },
-      { id: "drink", label: "喝飲料" },
-      { id: "adult", label: "看A片" },
-      { id: "bird", label: "玩鳥" },
     ];
 
+    /** 舊版內建項目：僅供歷史紀錄與圖表顯示標籤 */
+    const LEGACY_KIND_LABELS = {
+      drink: "喝飲料",
+      adult: "看A片",
+      bird: "玩鳥",
+    };
+
+    const CHECKIN_ICON_IDS = new Set(["gym", "jog", "friends", "partner"]);
     const CHECKIN_ICON_DIR = "assets/checkin";
     /** 圖更換去背或檔變更時遞增，破壞手機瀏覽器/Edge 的圖片快取 */
     const CHECKIN_ICON_VERSION = "4";
+    const CHECKIN_CUSTOM_KIND_MAX = 16;
+
+    /** @returns {{ id: string, label: string }[]} */
+    function loadCustomKinds() {
+      try {
+        const raw = localStorage.getItem(CHECKIN_CUSTOM_KINDS_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        const seen = new Set();
+        const out = [];
+        for (const o of parsed) {
+          if (!o || typeof o.id !== "string" || typeof o.label !== "string") continue;
+          const id = o.id.trim();
+          const label = o.label.trim().slice(0, 20);
+          if (!id || !label) continue;
+          if (!/^c[a-z0-9]+$/i.test(id)) continue;
+          if (seen.has(id)) continue;
+          seen.add(id);
+          out.push({ id, label });
+        }
+        return out.slice(0, CHECKIN_CUSTOM_KIND_MAX);
+      } catch {
+        return [];
+      }
+    }
+
+    /** @param {{ id: string, label: string }[]} rows */
+    function saveCustomKinds(rows) {
+      localStorage.setItem(CHECKIN_CUSTOM_KINDS_KEY, JSON.stringify(rows.slice(0, CHECKIN_CUSTOM_KIND_MAX)));
+      scheduleCloudPushIfAuthed();
+    }
+
+    /** 打卡按鈕：預設四項 + 自訂 */
+    function getCheckinButtonKinds() {
+      return [...CHECK_KINDS_PRESET, ...loadCustomKinds()];
+    }
 
     /**
-     * 手繪風格圖示（專案內 assets/checkin/*.png）
+     * 圖表用：預設順序 → 自訂 → 資料裡出現過的其他 kind（含舊內建）
+     * @param {{ ts: number, kind: string }[]} allCheckins
+     */
+    function collectOrderedKindsForCharts(allCheckins) {
+      const seen = new Set();
+      /** @type {{ id: string, label: string }[]} */
+      const out = [];
+      for (const k of CHECK_KINDS_PRESET) {
+        out.push({ id: k.id, label: k.label });
+        seen.add(k.id);
+      }
+      for (const k of loadCustomKinds()) {
+        if (!seen.has(k.id)) {
+          out.push({ id: k.id, label: k.label });
+          seen.add(k.id);
+        }
+      }
+      for (const c of allCheckins) {
+        if (!c.kind || seen.has(c.kind)) continue;
+        seen.add(c.kind);
+        out.push({ id: c.kind, label: kindLabel(c.kind) });
+      }
+      return out;
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    /**
+     * 預設四項用手繪 PNG；其餘用簡單 SVG
      * @param {string} id
      * @returns {string}
      */
     function checkinIconHtml(id) {
-      const q = new URLSearchParams({ v: CHECKIN_ICON_VERSION });
-      const src = `${CHECKIN_ICON_DIR}/${id}.png?${q.toString()}`;
-      return `<span class="checkin-icon" aria-hidden="true"><img src="${src}" alt="" width="40" height="40" loading="lazy" decoding="async" fetchpriority="low" /></span>`;
+      if (CHECKIN_ICON_IDS.has(id)) {
+        const q = new URLSearchParams({ v: CHECKIN_ICON_VERSION });
+        const src = `${CHECKIN_ICON_DIR}/${id}.png?${q.toString()}`;
+        return `<span class="checkin-icon" aria-hidden="true"><img src="${src}" alt="" width="40" height="40" loading="lazy" decoding="async" fetchpriority="low" /></span>`;
+      }
+      const svg =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>' +
+        "</svg>";
+      return `<span class="checkin-icon" aria-hidden="true">${svg}</span>`;
     }
 
     /** @typedef {{ date: string, weight: number }} Entry */
@@ -728,6 +1314,7 @@
     /** @param {Entry[]} entries */
     function saveEntries(entries) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+      scheduleCloudPushIfAuthed();
     }
 
     /** @param {Entry[]} entries */
@@ -754,6 +1341,15 @@
     /** @param {Goal} goal */
     function saveGoal(goal) {
       localStorage.setItem(GOAL_KEY, JSON.stringify(goal));
+      scheduleCloudPushIfAuthed();
+    }
+
+    function isValidStoredCheckinKind(s) {
+      if (!s || typeof s !== "string") return false;
+      const t = s.trim();
+      if (t.length < 1 || t.length > 48) return false;
+      if (/[<>"']/.test(t)) return false;
+      return true;
     }
 
     function loadCheckins() {
@@ -762,10 +1358,9 @@
         if (!raw) return [];
         const parsed = JSON.parse(raw);
         if (!Array.isArray(parsed)) return [];
-        const valid = new Set(CHECK_KINDS.map((k) => k.id));
         return parsed
-          .filter((c) => c && typeof c.ts === "number" && typeof c.kind === "string" && valid.has(c.kind))
-          .map((c) => ({ ts: c.ts, kind: c.kind }));
+          .filter((c) => c && typeof c.ts === "number" && typeof c.kind === "string" && isValidStoredCheckinKind(c.kind))
+          .map((c) => ({ ts: c.ts, kind: c.kind.trim() }));
       } catch {
         return [];
       }
@@ -774,6 +1369,7 @@
     /** @param {{ ts: number, kind: string }[]} rows */
     function saveCheckins(rows) {
       localStorage.setItem(CHECKIN_KEY, JSON.stringify(rows.slice(-5000)));
+      scheduleCloudPushIfAuthed();
     }
 
     function parseISODateLocal(iso) {
@@ -838,8 +1434,14 @@
     }
 
     function kindLabel(kind) {
-      const k = CHECK_KINDS.find((x) => x.id === kind);
-      return k ? k.label : kind;
+      const p = CHECK_KINDS_PRESET.find((x) => x.id === kind);
+      if (p) return p.label;
+      const c = loadCustomKinds().find((x) => x.id === kind);
+      if (c) return c.label;
+      if (Object.prototype.hasOwnProperty.call(LEGACY_KIND_LABELS, kind)) {
+        return LEGACY_KIND_LABELS[kind];
+      }
+      return kind;
     }
 
     function localDayKey(ts) {
@@ -918,6 +1520,8 @@
     const appTitle = document.getElementById("appTitle");
     const appSubtitle = document.getElementById("appSubtitle");
     const checkinGrid = document.getElementById("checkinGrid");
+    const checkinCustomLabelInput = document.getElementById("checkinCustomLabel");
+    const checkinCustomAddBtn = document.getElementById("checkinCustomAddBtn");
     const checkinRecent = document.getElementById("checkinRecent");
     const checkinRecentMeta = document.getElementById("checkinRecentMeta");
     const checkinRecentNote = document.getElementById("checkinRecentNote");
@@ -939,10 +1543,79 @@
     const listFoldMeta = document.getElementById("listFoldMeta");
     const listFoldNote = document.getElementById("listFoldNote");
     const weightHeaderActions = document.getElementById("weightHeaderActions");
+    const accountBtn = document.getElementById("accountBtn");
+    const authModal = document.getElementById("authModal");
+    const authModalBackdrop = document.getElementById("authModalBackdrop");
+    const authModalCloseBtn = document.getElementById("authModalCloseBtn");
+    const authFormBlock = document.getElementById("authFormBlock");
+    const authLoggedBlock = document.getElementById("authLoggedBlock");
+    const authTabLogin = document.getElementById("authTabLogin");
+    const authTabRegister = document.getElementById("authTabRegister");
+    const authPanelLogin = document.getElementById("authPanelLogin");
+    const authPanelRegister = document.getElementById("authPanelRegister");
+    const authEmailLogin = document.getElementById("authEmailLogin");
+    const authPassLogin = document.getElementById("authPassLogin");
+    const authEmailReg = document.getElementById("authEmailReg");
+    const authPassReg = document.getElementById("authPassReg");
+    const authPassReg2 = document.getElementById("authPassReg2");
+    const authFormError = document.getElementById("authFormError");
+    const authSubmitBtn = document.getElementById("authSubmitBtn");
+    const authLoggedEmail = document.getElementById("authLoggedEmail");
+    const authCloudTimeLine = document.getElementById("authCloudTimeLine");
+    const authPushBtn = document.getElementById("authPushBtn");
+    const authPullBtn = document.getElementById("authPullBtn");
+    const authSignOutBtn = document.getElementById("authSignOutBtn");
+    const authModalTitle = document.getElementById("authModalTitle");
+    const mergeModal = document.getElementById("mergeModal");
+
+    function syncAuthFormMode(isRegister) {
+      authTabLogin.setAttribute("aria-selected", isRegister ? "false" : "true");
+      authTabRegister.setAttribute("aria-selected", isRegister ? "true" : "false");
+      authPanelLogin.hidden = isRegister;
+      authPanelRegister.hidden = !isRegister;
+      authSubmitBtn.textContent = isRegister ? "註冊並登入" : "登入";
+    }
+
+    async function refreshAuthLoggedPanel() {
+      const u = firebaseAuth.currentUser;
+      if (!u) return;
+      authCloudTimeLine.textContent = "雲端最近更新：讀取中…";
+      try {
+        const snap = await bundleDocRef(u.uid).get();
+        const d = readBundleFromSnap(snap);
+        authCloudTimeLine.textContent = "雲端最近更新：" + (d && d.updatedAt ? formatFirestoreTime(d.updatedAt) : "—");
+      } catch (e) {
+        console.error(e);
+        authCloudTimeLine.textContent = "雲端最近更新：無法讀取";
+      }
+    }
+
+    function openAuthModal() {
+      authFormError.textContent = "";
+      const u = firebaseAuth.currentUser;
+      if (u) {
+        authFormBlock.hidden = true;
+        authLoggedBlock.hidden = false;
+        authModalTitle.textContent = "帳號";
+        authLoggedEmail.textContent = u.email || "";
+        void refreshAuthLoggedPanel();
+      } else {
+        authFormBlock.hidden = false;
+        authLoggedBlock.hidden = true;
+        authModalTitle.textContent = "登入／註冊";
+        syncAuthFormMode(false);
+      }
+      authModal.hidden = false;
+      authModal.classList.add("open");
+      authModal.setAttribute("aria-hidden", "false");
+      accountBtn.setAttribute("aria-expanded", "true");
+    }
 
     const LIST_RECENT_MAX = 8;
 
     let pendingDeleteDate = null;
+    /** @type {"weight"|"checkin"} */
+    let mainTab = "weight";
 
     function openEntryModal() {
       dateInput.value = todayISO();
@@ -1013,6 +1686,16 @@
     settingsCloseBtn.addEventListener("click", closeSettingsModal);
     document.addEventListener("keydown", (ev) => {
       if (ev.key !== "Escape") return;
+      if (mergeModal.classList.contains("open")) {
+        ev.preventDefault();
+        resolveMerge("local");
+        return;
+      }
+      if (authModal.classList.contains("open")) {
+        ev.preventDefault();
+        closeAuthModalIfOpen();
+        return;
+      }
       if (entryModal.classList.contains("open")) {
         ev.preventDefault();
         closeEntryModal();
@@ -1363,8 +2046,9 @@
       const c7 = filterSinceDays(all, 7);
       const c30 = filterSinceDays(all, 30);
 
-      const counts7 = CHECK_KINDS.map((k) => c7.filter((c) => c.kind === k.id).length);
-      const counts30 = CHECK_KINDS.map((k) => c30.filter((c) => c.kind === k.id).length);
+      const orderedKinds = collectOrderedKindsForCharts(all);
+      const counts7 = orderedKinds.map((k) => c7.filter((c) => c.kind === k.id).length);
+      const counts30 = orderedKinds.map((k) => c30.filter((c) => c.kind === k.id).length);
       const pieTotal = counts30.reduce((a, b) => a + b, 0);
 
       if (all.length === 0) {
@@ -1376,15 +2060,16 @@
         checkinChartsBlock.style.display = "block";
         destroyCheckinCharts();
 
+        const barColors = orderedKinds.map((_, i) => CHECKIN_CHART_COLORS[i % CHECKIN_CHART_COLORS.length]);
         checkinBar7 = new Chart(checkinCanvasBar7, {
           type: "bar",
           data: {
-            labels: CHECK_KINDS.map((k) => k.label),
+            labels: orderedKinds.map((k) => k.label),
             datasets: [
               {
                 label: "近 7 天次數",
                 data: counts7,
-                backgroundColor: CHECKIN_CHART_COLORS,
+                backgroundColor: barColors,
                 borderRadius: 6,
                 borderSkipped: false,
               },
@@ -1421,10 +2106,10 @@
           const p = iso.split("-").map(Number);
           return `${p[1]}/${p[2]}`;
         });
-        const datasetsStack = CHECK_KINDS.map((k, i) => ({
+        const datasetsStack = orderedKinds.map((k, i) => ({
           label: k.label,
           data: days30.map((iso) => countKindInDay(c30, iso, k.id)),
-          backgroundColor: CHECKIN_CHART_COLORS[i],
+          backgroundColor: CHECKIN_CHART_COLORS[i % CHECKIN_CHART_COLORS.length],
           borderWidth: 0,
         }));
 
@@ -1495,14 +2180,15 @@
             },
           });
         } else {
+          const pieColors = orderedKinds.map((_, i) => CHECKIN_CHART_COLORS[i % CHECKIN_CHART_COLORS.length]);
           checkinPie30 = new Chart(checkinCanvasPie30, {
             type: "doughnut",
             data: {
-              labels: CHECK_KINDS.map((k) => k.label),
+              labels: orderedKinds.map((k) => k.label),
               datasets: [
                 {
                   data: counts30,
-                  backgroundColor: CHECKIN_CHART_COLORS,
+                  backgroundColor: pieColors,
                   borderWidth: 2,
                   borderColor: "#fff",
                 },
@@ -1547,7 +2233,7 @@
         });
         checkinRecent.innerHTML = recent
           .map((c) => {
-            const lab = kindLabel(c.kind);
+            const lab = escapeHtml(kindLabel(c.kind));
             return `<div class="checkin-log"><strong>${lab}</strong><span>${fmt.format(c.ts)}</span></div>`;
           })
           .join("");
@@ -1560,11 +2246,9 @@
       }
     }
 
-    function initCheckinGrid() {
-      checkinGrid.innerHTML = CHECK_KINDS.map(
-        (k) =>
-          `<button type="button" class="checkin-btn checkin-btn-${k.id}" data-kind="${k.id}">${checkinIconHtml(k.id)}<span class="checkin-label">${k.label}</span></button>`
-      ).join("");
+    function bindCheckinGridClickOnce() {
+      if (checkinGrid.dataset.clickBound === "1") return;
+      checkinGrid.dataset.clickBound = "1";
       checkinGrid.addEventListener("click", (ev) => {
         const btn = ev.target.closest(".checkin-btn[data-kind]");
         if (!btn || btn.disabled) return;
@@ -1582,7 +2266,47 @@
         showUndoCheckinToast(ts, kind);
         renderCheckinPanel();
       });
+    }
+
+    function renderCheckinGrid() {
+      const kinds = getCheckinButtonKinds();
+      checkinGrid.innerHTML = kinds
+        .map((k) => {
+          const isPreset = CHECK_KINDS_PRESET.some((p) => p.id === k.id);
+          const btnClass = isPreset ? `checkin-btn checkin-btn-${k.id}` : "checkin-btn checkin-btn-custom";
+          return `<button type="button" class="${btnClass}" data-kind="${escapeHtml(k.id)}">${checkinIconHtml(k.id)}<span class="checkin-label">${escapeHtml(k.label)}</span></button>`;
+        })
+        .join("");
       updateCheckinButtonsForToday();
+    }
+
+    function addCustomCheckinKindFromInput() {
+      const raw = checkinCustomLabelInput.value;
+      const label = raw.trim();
+      if (!label) {
+        showToast("請輸入項目名稱");
+        return;
+      }
+      if (label.length > 20) {
+        showToast("名稱請 20 字以內");
+        return;
+      }
+      const customs = loadCustomKinds();
+      if (customs.length >= CHECKIN_CUSTOM_KIND_MAX) {
+        showToast(`自訂項目最多 ${CHECKIN_CUSTOM_KIND_MAX} 個`);
+        return;
+      }
+      const allBtn = getCheckinButtonKinds();
+      if (allBtn.some((k) => k.label.trim() === label)) {
+        showToast("已有相同名稱的項目");
+        return;
+      }
+      const id = "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      customs.push({ id, label });
+      saveCustomKinds(customs);
+      checkinCustomLabelInput.value = "";
+      renderCheckinGrid();
+      showToast("已新增：" + label);
     }
 
     undoToastBtn.addEventListener("click", () => {
@@ -1602,6 +2326,7 @@
     });
 
     function switchMainTab(which) {
+      mainTab = which;
       const onWeight = which === "weight";
       viewWeight.hidden = !onWeight;
       viewCheckin.hidden = onWeight;
@@ -1612,22 +2337,162 @@
       }
       tabWeight.setAttribute("aria-selected", onWeight ? "true" : "false");
       tabCheckin.setAttribute("aria-selected", onWeight ? "false" : "true");
+      const loggedIn = !!firebaseAuth.currentUser;
       if (onWeight) {
         appTitle.textContent = "每日體重";
-        appSubtitle.textContent = "資料存在這台裝置上，不會上傳伺服器";
+        appSubtitle.textContent = loggedIn
+          ? "已登入：體重紀錄會與雲端同步"
+          : "資料存在這台裝置上，未登入則不會上傳伺服器";
       } else {
         appTitle.textContent = "習慣打卡";
-        appSubtitle.textContent = "打卡資料僅存在此裝置，可在此查看頻率與紀錄";
+        appSubtitle.textContent = loggedIn
+          ? "已登入：打卡紀錄會與雲端同步"
+          : "打卡資料僅存在此裝置，可在此查看頻率與紀錄";
         requestAnimationFrame(() => {
           requestAnimationFrame(() => renderCheckinPanel());
         });
       }
     }
 
+    function refreshLoginSubtitles() {
+      switchMainTab(mainTab);
+    }
+
     tabWeight.addEventListener("click", () => switchMainTab("weight"));
     tabCheckin.addEventListener("click", () => switchMainTab("checkin"));
 
-    initCheckinGrid();
+    bindCheckinGridClickOnce();
+    renderCheckinGrid();
+    checkinCustomAddBtn.addEventListener("click", addCustomCheckinKindFromInput);
+    checkinCustomLabelInput.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter") {
+        ev.preventDefault();
+        addCustomCheckinKindFromInput();
+      }
+    });
+
+    document.getElementById("mergePickLocal").addEventListener("click", () => resolveMerge("local"));
+    document.getElementById("mergePickCloud").addEventListener("click", () => resolveMerge("cloud"));
+
+    accountBtn.addEventListener("click", () => openAuthModal());
+    authModalBackdrop.addEventListener("click", () => closeAuthModalIfOpen());
+    authModalCloseBtn.addEventListener("click", () => closeAuthModalIfOpen());
+    authTabLogin.addEventListener("click", () => syncAuthFormMode(false));
+    authTabRegister.addEventListener("click", () => syncAuthFormMode(true));
+
+    authSubmitBtn.addEventListener("click", async () => {
+      authFormError.textContent = "";
+      const isReg = authTabRegister.getAttribute("aria-selected") === "true";
+      try {
+        if (isReg) {
+          const email = authEmailReg.value.trim();
+          const p1 = authPassReg.value;
+          const p2 = authPassReg2.value;
+          if (!email) {
+            authFormError.textContent = "請輸入電子郵件";
+            return;
+          }
+          if (p1.length < 6) {
+            authFormError.textContent = "密碼至少 6 個字元";
+            return;
+          }
+          if (p1 !== p2) {
+            authFormError.textContent = "兩次密碼不一致";
+            return;
+          }
+          authSubmitBtn.disabled = true;
+          await firebaseAuth.createUserWithEmailAndPassword(email, p1);
+        } else {
+          const email = authEmailLogin.value.trim();
+          const pass = authPassLogin.value;
+          if (!email || !pass) {
+            authFormError.textContent = "請輸入電子郵件與密碼";
+            return;
+          }
+          authSubmitBtn.disabled = true;
+          await firebaseAuth.signInWithEmailAndPassword(email, pass);
+        }
+      } catch (e) {
+        authFormError.textContent = authErrorMessage(e.code || "");
+        console.error(e);
+      } finally {
+        authSubmitBtn.disabled = false;
+      }
+    });
+
+    authSignOutBtn.addEventListener("click", async () => {
+      try {
+        await firebaseAuth.signOut();
+        closeAuthModalIfOpen();
+        showToast("已登出");
+      } catch (e) {
+        console.error(e);
+        showToast("登出失敗");
+      }
+    });
+
+    authPushBtn.addEventListener("click", async () => {
+      const u = firebaseAuth.currentUser;
+      if (!u) return;
+      authPushBtn.disabled = true;
+      try {
+        await pushLocalBundleToCloud(u.uid);
+        await refreshAuthLoggedPanel();
+        showToast("已上傳到雲端");
+      } catch (e) {
+        console.error(e);
+        showToast("上傳失敗");
+      } finally {
+        authPushBtn.disabled = false;
+      }
+    });
+
+    authPullBtn.addEventListener("click", async () => {
+      const u = firebaseAuth.currentUser;
+      if (!u) return;
+      if (!confirm("確定要以雲端資料覆蓋本機？此裝置上未備份的變更將遺失。")) return;
+      authPullBtn.disabled = true;
+      try {
+        const snap = await bundleDocRef(u.uid).get();
+        const d = readBundleFromSnap(snap);
+        if (d && cloudBundleHasMeaningfulData(d)) {
+          applyCloudBundleToLocal(d);
+        } else {
+          applyCloudBundleToLocal({
+            entries: [],
+            goal: { targetDate: null, targetWeight: null },
+            checkins: [],
+            checkinCustomKinds: [],
+          });
+        }
+        refresh();
+        renderCheckinGrid();
+        renderCheckinPanel();
+        syncGoalFormFromStorage();
+        await refreshAuthLoggedPanel();
+        showToast("已從雲端覆蓋本機");
+      } catch (e) {
+        console.error(e);
+        showToast("下載失敗");
+      } finally {
+        authPullBtn.disabled = false;
+      }
+    });
+
+    firebaseAuth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        refreshLoginSubtitles();
+        return;
+      }
+      try {
+        await runPostAuthSync(user);
+      } catch (e) {
+        console.error(e);
+        showToast("登入後同步發生錯誤");
+      }
+      refreshLoginSubtitles();
+    });
+
     refresh();
   </script>
 </body>
