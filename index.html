@@ -607,6 +607,12 @@
       word-break: break-all;
       margin-bottom: 10px;
     }
+    .auth-sync-hint {
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.45;
+      margin: 8px 0 14px;
+    }
     .merge-actions-stack {
       display: flex;
       flex-direction: column;
@@ -643,6 +649,22 @@
     }
     .merge-actions-stack .btn-merge-cloud:active:not(:disabled) {
       background: rgba(13, 148, 136, 0.08);
+    }
+    .merge-actions-stack .btn-merge-cancel {
+      margin-top: 4px;
+      padding: 10px 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      touch-action: manipulation;
+      text-decoration: underline;
+    }
+    .merge-actions-stack .btn-merge-cancel:active {
+      color: var(--text);
     }
     input[type="email"],
     input[type="password"] {
@@ -834,6 +856,7 @@
       <div class="merge-actions-stack">
         <button type="button" class="btn-merge-local" id="mergePickLocal">以本機為準（覆蓋雲端）</button>
         <button type="button" class="btn-merge-cloud" id="mergePickCloud">以雲端為準（覆蓋本機）</button>
+        <button type="button" class="btn-merge-cancel" id="mergeModalCancel">取消</button>
       </div>
     </div>
   </div>
@@ -868,8 +891,8 @@
         <div class="auth-logged-panel">
           <div class="auth-email-line" id="authLoggedEmail"></div>
           <p id="authCloudTimeLine" style="margin:0 0 12px;">雲端最近更新：—</p>
-          <button type="button" class="btn btn-secondary" id="authPushBtn">將本機上傳到雲端</button>
-          <button type="button" class="btn btn-secondary" id="authPullBtn">從雲端覆蓋本機</button>
+          <button type="button" class="btn" id="authSyncChoiceBtn">資料同步…</button>
+          <p class="auth-sync-hint">會顯示雲端最近更新時間，並可選<strong>以本機為主</strong>（上傳覆蓋雲端）或<strong>以雲端為主</strong>（下載覆蓋本機）。</p>
           <button type="button" class="btn-ghost" id="authSignOutBtn">登出</button>
         </div>
       </div>
@@ -1068,7 +1091,7 @@
       return map[code] || "發生錯誤，請稍後再試";
     }
 
-    /** @returns {Promise<'local'|'cloud'>} */
+    /** @returns {Promise<'local'|'cloud'|'cancel'>} */
     function openMergeModalAndWait(cloudData) {
       return new Promise((resolve) => {
         mergeChoiceResolver = resolve;
@@ -1148,8 +1171,9 @@
       if (ab) ab.setAttribute("aria-expanded", "false");
     }
 
-    async function runPostAuthSync(user) {
-      closeAuthModalIfOpen();
+    /** 讀取雲端並開啟合併對話框，依選擇以本機或雲端為主同步（登入後與手動「資料同步」共用） */
+    async function runInteractiveCloudSync(user) {
+      if (!user) return;
       let snap;
       try {
         snap = await bundleDocRef(user.uid).get();
@@ -1160,6 +1184,10 @@
       }
       const cloudData = readBundleFromSnap(snap);
       const choice = await openMergeModalAndWait(cloudData);
+      if (choice === "cancel") {
+        showToast("已取消同步");
+        return;
+      }
       try {
         if (choice === "local") {
           await pushLocalBundleToCloud(user.uid);
@@ -1183,6 +1211,11 @@
       renderCheckinPanel();
       syncGoalFormFromStorage();
       showToast("同步完成");
+    }
+
+    async function runPostAuthSync(user) {
+      closeAuthModalIfOpen();
+      await runInteractiveCloudSync(user);
     }
 
     /** 預設一鍵打卡（固定四項） */
@@ -1562,8 +1595,7 @@
     const authSubmitBtn = document.getElementById("authSubmitBtn");
     const authLoggedEmail = document.getElementById("authLoggedEmail");
     const authCloudTimeLine = document.getElementById("authCloudTimeLine");
-    const authPushBtn = document.getElementById("authPushBtn");
-    const authPullBtn = document.getElementById("authPullBtn");
+    const authSyncChoiceBtn = document.getElementById("authSyncChoiceBtn");
     const authSignOutBtn = document.getElementById("authSignOutBtn");
     const authModalTitle = document.getElementById("authModalTitle");
     const mergeModal = document.getElementById("mergeModal");
@@ -1688,7 +1720,7 @@
       if (ev.key !== "Escape") return;
       if (mergeModal.classList.contains("open")) {
         ev.preventDefault();
-        resolveMerge("local");
+        resolveMerge("cancel");
         return;
       }
       if (authModal.classList.contains("open")) {
@@ -2373,6 +2405,8 @@
 
     document.getElementById("mergePickLocal").addEventListener("click", () => resolveMerge("local"));
     document.getElementById("mergePickCloud").addEventListener("click", () => resolveMerge("cloud"));
+    document.getElementById("mergeModalCancel").addEventListener("click", () => resolveMerge("cancel"));
+    document.getElementById("mergeModalBackdrop").addEventListener("click", () => resolveMerge("cancel"));
 
     accountBtn.addEventListener("click", () => openAuthModal());
     authModalBackdrop.addEventListener("click", () => closeAuthModalIfOpen());
@@ -2431,51 +2465,18 @@
       }
     });
 
-    authPushBtn.addEventListener("click", async () => {
+    authSyncChoiceBtn.addEventListener("click", async () => {
       const u = firebaseAuth.currentUser;
       if (!u) return;
-      authPushBtn.disabled = true;
+      authSyncChoiceBtn.disabled = true;
       try {
-        await pushLocalBundleToCloud(u.uid);
+        await runInteractiveCloudSync(u);
         await refreshAuthLoggedPanel();
-        showToast("已上傳到雲端");
       } catch (e) {
         console.error(e);
-        showToast("上傳失敗");
+        showToast("同步過程發生錯誤");
       } finally {
-        authPushBtn.disabled = false;
-      }
-    });
-
-    authPullBtn.addEventListener("click", async () => {
-      const u = firebaseAuth.currentUser;
-      if (!u) return;
-      if (!confirm("確定要以雲端資料覆蓋本機？此裝置上未備份的變更將遺失。")) return;
-      authPullBtn.disabled = true;
-      try {
-        const snap = await bundleDocRef(u.uid).get();
-        const d = readBundleFromSnap(snap);
-        if (d && cloudBundleHasMeaningfulData(d)) {
-          applyCloudBundleToLocal(d);
-        } else {
-          applyCloudBundleToLocal({
-            entries: [],
-            goal: { targetDate: null, targetWeight: null },
-            checkins: [],
-            checkinCustomKinds: [],
-          });
-        }
-        refresh();
-        renderCheckinGrid();
-        renderCheckinPanel();
-        syncGoalFormFromStorage();
-        await refreshAuthLoggedPanel();
-        showToast("已從雲端覆蓋本機");
-      } catch (e) {
-        console.error(e);
-        showToast("下載失敗");
-      } finally {
-        authPullBtn.disabled = false;
+        authSyncChoiceBtn.disabled = false;
       }
     });
 
