@@ -436,6 +436,15 @@
       pointer-events: auto;
     }
     .undo-toast-msg { flex: 1; min-width: 0; line-height: 1.35; }
+    .undo-toast-countdown {
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      font-size: 0.8rem;
+      opacity: 0.88;
+      min-width: 2.75em;
+      text-align: center;
+    }
     .undo-toast-btn {
       flex-shrink: 0;
       padding: 8px 14px;
@@ -788,6 +797,7 @@
 
   <div id="undoToast" class="undo-toast" role="status" aria-live="polite" aria-atomic="true" hidden>
     <span class="undo-toast-msg" id="undoToastMsg"></span>
+    <span id="undoToastCountdown" class="undo-toast-countdown" aria-hidden="true"></span>
     <button type="button" class="undo-toast-btn" id="undoToastBtn">復原</button>
   </div>
 
@@ -1171,7 +1181,7 @@
       if (ab) ab.setAttribute("aria-expanded", "false");
     }
 
-    /** 讀取雲端並開啟合併對話框，依選擇以本機或雲端為主同步（登入後與手動「資料同步」共用） */
+    /** 讀取雲端並開啟合併對話框，依選擇以本機或雲端為主同步（僅在使用者按「資料同步…」時呼叫） */
     async function runInteractiveCloudSync(user) {
       if (!user) return;
       let snap;
@@ -1213,9 +1223,14 @@
       showToast("同步完成");
     }
 
-    async function runPostAuthSync(user) {
-      closeAuthModalIfOpen();
-      await runInteractiveCloudSync(user);
+    /** 登入狀態變更時：若帳號視窗正開著，切到已登入畫面（不自動跳出同步選擇） */
+    function syncAuthModalLoggedStateIfOpen(user) {
+      if (!user || !authModal.classList.contains("open")) return;
+      authFormBlock.hidden = true;
+      authLoggedBlock.hidden = false;
+      authModalTitle.textContent = "帳號";
+      authLoggedEmail.textContent = user.email || "";
+      void refreshAuthLoggedPanel();
     }
 
     /** 預設一鍵打卡（固定四項） */
@@ -1533,6 +1548,7 @@
     const toastEl = document.getElementById("toast");
     const undoToast = document.getElementById("undoToast");
     const undoToastMsg = document.getElementById("undoToastMsg");
+    const undoToastCountdown = document.getElementById("undoToastCountdown");
     const undoToastBtn = document.getElementById("undoToastBtn");
     const chartCanvas = document.getElementById("chart");
     const deleteModal = document.getElementById("deleteModal");
@@ -1852,6 +1868,9 @@
     /** @type {{ ts: number, kind: string } | null} */
     let pendingUndoCheckin = null;
     let undoCheckinTimer = null;
+    /** @type {number | null} */
+    let undoCheckinCountdownTimer = null;
+    let undoToastDeadline = 0;
 
     function hideUndoCheckinToast() {
       undoToast.classList.remove("show");
@@ -1859,14 +1878,25 @@
       undoToast.setAttribute("aria-hidden", "true");
       clearTimeout(undoCheckinTimer);
       undoCheckinTimer = null;
+      clearInterval(undoCheckinCountdownTimer);
+      undoCheckinCountdownTimer = null;
       pendingUndoCheckin = null;
+      undoToastCountdown.textContent = "";
     }
 
     function showUndoCheckinToast(ts, kind) {
       clearTimeout(undoCheckinTimer);
+      clearInterval(undoCheckinCountdownTimer);
       toastEl.classList.remove("show");
       pendingUndoCheckin = { ts, kind };
       undoToastMsg.textContent = `已打卡：${kindLabel(kind)}`;
+      undoToastDeadline = Date.now() + UNDO_CHECKIN_MS;
+      const tickCountdown = () => {
+        const leftSec = Math.max(0, Math.ceil((undoToastDeadline - Date.now()) / 1000));
+        undoToastCountdown.textContent = leftSec > 0 ? `${leftSec} 秒` : "";
+      };
+      tickCountdown();
+      undoCheckinCountdownTimer = setInterval(tickCountdown, 250);
       undoToast.removeAttribute("hidden");
       undoToast.setAttribute("aria-hidden", "false");
       undoToast.classList.add("show");
@@ -2480,17 +2510,12 @@
       }
     });
 
-    firebaseAuth.onAuthStateChanged(async (user) => {
+    firebaseAuth.onAuthStateChanged((user) => {
       if (!user) {
         refreshLoginSubtitles();
         return;
       }
-      try {
-        await runPostAuthSync(user);
-      } catch (e) {
-        console.error(e);
-        showToast("登入後同步發生錯誤");
-      }
+      syncAuthModalLoggedStateIfOpen(user);
       refreshLoginSubtitles();
     });
 
