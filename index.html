@@ -470,6 +470,10 @@
       padding: 20px;
       padding-bottom: max(20px, env(safe-area-inset-bottom));
     }
+    /* 須高於設定面板（210），否則從設定移除項目時確認框會被擋住 */
+    #deleteModal.delete-modal {
+      z-index: 212;
+    }
     .delete-modal.open { display: flex; }
     .delete-modal.settings-modal { z-index: 210; }
     .delete-modal-panel.settings-modal-panel {
@@ -495,6 +499,52 @@
       line-height: 1.45;
     }
     .settings-modal-scroll > h3 { margin: 0 0 6px; font-size: 1.1rem; }
+    .settings-modal-scroll h3.settings-checkin-custom-h3 {
+      margin-top: 22px;
+    }
+    .settings-checkin-custom-list {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fafafa;
+    }
+    .settings-checkin-custom-empty {
+      margin: 0;
+      padding: 14px 12px;
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .settings-checkin-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .settings-checkin-row:last-child {
+      border-bottom: none;
+    }
+    .settings-checkin-name {
+      font-weight: 600;
+      font-size: 0.92rem;
+      min-width: 0;
+      word-break: break-word;
+    }
+    .settings-checkin-del {
+      flex-shrink: 0;
+      padding: 8px 12px;
+      font-size: 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--danger);
+      font-weight: 600;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
     .btn-close-settings {
       width: 100%;
       margin: 0;
@@ -741,7 +791,7 @@
       <div class="list-header">
         <h2>一鍵打卡</h2>
       </div>
-      <p class="subtitle" style="margin-top:0">按一下立刻記錄此刻（每個項目每天最多一次）。誤觸可在底部深色橫條點「復原」（約 6 秒內）。</p>
+      <p class="subtitle" style="margin-top:0">按一下立刻記錄此刻（每個項目每天最多一次）。誤觸可在底部深色橫條點「復原」（約 6 秒內）。自訂項目（紫色按鈕）可<strong>長按約半秒</strong>移除，或到<strong>設定</strong>裡管理。</p>
       <div class="checkin-grid" id="checkinGrid"></div>
       <div class="checkin-add-row">
         <input type="text" id="checkinCustomLabel" maxlength="20" placeholder="其他習慣名稱…" enterkeyhint="done" autocomplete="off" />
@@ -840,6 +890,9 @@
         <button type="button" class="btn-ghost" id="goalClearBtn">清除目標</button>
         <div id="goalStats" class="goal-stats" style="margin-top:16px;"></div>
         <p id="encourageLine" class="encourage-line" aria-live="polite"></p>
+        <h3 class="settings-checkin-custom-h3">自訂打卡項目</h3>
+        <p class="settings-modal-lead" style="margin-top:0">在「打卡」分頁新增的習慣捷徑。移除後格子上的按鈕會消失，過去的打卡紀錄仍會保留。</p>
+        <div id="settingsCheckinCustomList" class="settings-checkin-custom-list" role="list"></div>
       </div>
       <button type="button" class="btn-close-settings" id="settingsCloseBtn">關閉</button>
     </div>
@@ -1324,6 +1377,31 @@
         .replace(/"/g, "&quot;");
     }
 
+    /** @param {string} id */
+    function removeCustomCheckinKindById(id) {
+      const customs = loadCustomKinds().filter((k) => k.id !== id);
+      saveCustomKinds(customs);
+      renderCheckinGrid();
+      renderCheckinPanel();
+      if (settingsModal.classList.contains("open")) renderSettingsCheckinCustomList();
+    }
+
+    function renderSettingsCheckinCustomList() {
+      if (!settingsCheckinCustomList) return;
+      const customs = loadCustomKinds();
+      if (customs.length === 0) {
+        settingsCheckinCustomList.innerHTML =
+          '<p class="settings-checkin-custom-empty">目前沒有自訂項目。請切換到「打卡」分頁，在下方輸入名稱後按「新增項目」。</p>';
+        return;
+      }
+      settingsCheckinCustomList.innerHTML = customs
+        .map(
+          (k) =>
+            `<div class="settings-checkin-row" role="listitem"><span class="settings-checkin-name">${escapeHtml(k.label)}</span><button type="button" class="settings-checkin-del" data-checkin-kind-id="${escapeHtml(k.id)}">移除</button></div>`
+        )
+        .join("");
+    }
+
     /**
      * 預設四項用手繪 PNG；其餘用簡單 SVG
      * @param {string} id
@@ -1552,6 +1630,7 @@
     const undoToastBtn = document.getElementById("undoToastBtn");
     const chartCanvas = document.getElementById("chart");
     const deleteModal = document.getElementById("deleteModal");
+    const deleteModalTitle = document.getElementById("deleteModalTitle");
     const deleteModalMsg = document.getElementById("deleteModalMsg");
     const deleteModalBackdrop = document.getElementById("deleteModalBackdrop");
     const deleteModalCancel = document.getElementById("deleteModalCancel");
@@ -1582,6 +1661,7 @@
     const settingsModal = document.getElementById("settingsModal");
     const settingsModalBackdrop = document.getElementById("settingsModalBackdrop");
     const settingsCloseBtn = document.getElementById("settingsCloseBtn");
+    const settingsCheckinCustomList = document.getElementById("settingsCheckinCustomList");
     const settingsBtn = document.getElementById("settingsBtn");
     const entryModal = document.getElementById("entryModal");
     const entryModalBackdrop = document.getElementById("entryModalBackdrop");
@@ -1662,6 +1742,10 @@
     const LIST_RECENT_MAX = 8;
 
     let pendingDeleteDate = null;
+    /** @type {{ id: string, label: string } | null} */
+    let pendingDeleteCheckinKind = null;
+    /** 長按刪除後，擋下同一顆自訂按鈕誤觸發的 click；逾時自動清除 */
+    let checkinSuppressClickKind = null;
     /** @type {"weight"|"checkin"} */
     let mainTab = "weight";
 
@@ -1689,6 +1773,7 @@
       settingsBtn.setAttribute("aria-expanded", "true");
       syncGoalFormFromStorage();
       renderGoalInsight();
+      renderSettingsCheckinCustomList();
     }
 
     function closeSettingsModal() {
@@ -1699,8 +1784,21 @@
     }
 
     function openDeleteModal(date) {
+      pendingDeleteCheckinKind = null;
       pendingDeleteDate = date;
+      deleteModalTitle.textContent = "刪除紀錄";
       deleteModalMsg.textContent = `確定要刪除 ${date} 的體重紀錄嗎？此動作無法復原。`;
+      deleteModal.hidden = false;
+      deleteModal.classList.add("open");
+      deleteModal.setAttribute("aria-hidden", "false");
+    }
+
+    /** @param {string} id @param {string} label */
+    function openDeleteCheckinKindModal(id, label) {
+      pendingDeleteDate = null;
+      pendingDeleteCheckinKind = { id, label };
+      deleteModalTitle.textContent = "移除自訂打卡";
+      deleteModalMsg.textContent = `確定要移除「${label}」嗎？格子上將不再顯示此按鈕；過去的打卡紀錄仍會保留。`;
       deleteModal.hidden = false;
       deleteModal.classList.add("open");
       deleteModal.setAttribute("aria-hidden", "false");
@@ -1708,12 +1806,21 @@
 
     function closeDeleteModal() {
       pendingDeleteDate = null;
+      pendingDeleteCheckinKind = null;
+      checkinSuppressClickKind = null;
       deleteModal.classList.remove("open");
       deleteModal.hidden = true;
       deleteModal.setAttribute("aria-hidden", "true");
     }
 
     function runPendingDelete() {
+      if (pendingDeleteCheckinKind) {
+        const { id, label } = pendingDeleteCheckinKind;
+        closeDeleteModal();
+        removeCustomCheckinKindById(id);
+        showToast("已移除：" + label);
+        return;
+      }
       if (!pendingDeleteDate) return;
       const date = pendingDeleteDate;
       closeDeleteModal();
@@ -1732,6 +1839,15 @@
     settingsBtn.addEventListener("click", openSettingsModal);
     settingsModalBackdrop.addEventListener("click", closeSettingsModal);
     settingsCloseBtn.addEventListener("click", closeSettingsModal);
+    settingsCheckinCustomList.addEventListener("click", (ev) => {
+      const delBtn = ev.target.closest(".settings-checkin-del");
+      if (!delBtn) return;
+      const id = delBtn.getAttribute("data-checkin-kind-id");
+      if (!id) return;
+      const row = loadCustomKinds().find((x) => x.id === id);
+      const label = row ? row.label : id;
+      openDeleteCheckinKindModal(id, label);
+    });
     document.addEventListener("keydown", (ev) => {
       if (ev.key !== "Escape") return;
       if (mergeModal.classList.contains("open")) {
@@ -2312,6 +2428,17 @@
       if (checkinGrid.dataset.clickBound === "1") return;
       checkinGrid.dataset.clickBound = "1";
       checkinGrid.addEventListener("click", (ev) => {
+        if (checkinSuppressClickKind) {
+          const hitBtn = ev.target.closest(".checkin-btn[data-kind]");
+          const hitKind = hitBtn ? hitBtn.getAttribute("data-kind") : null;
+          if (hitKind === checkinSuppressClickKind) {
+            checkinSuppressClickKind = null;
+            ev.preventDefault();
+            ev.stopPropagation();
+            return;
+          }
+          checkinSuppressClickKind = null;
+        }
         const btn = ev.target.closest(".checkin-btn[data-kind]");
         if (!btn || btn.disabled) return;
         const kind = btn.getAttribute("data-kind");
@@ -2327,6 +2454,61 @@
         saveCheckins(rows);
         showUndoCheckinToast(ts, kind);
         renderCheckinPanel();
+      });
+    }
+
+    const CHECKIN_LONG_PRESS_MS = 520;
+    const CHECKIN_LONG_PRESS_MOVE_PX = 14;
+
+    function bindCheckinGridLongPressOnce() {
+      if (checkinGrid.dataset.longPressBound === "1") return;
+      checkinGrid.dataset.longPressBound = "1";
+      checkinGrid.addEventListener("contextmenu", (ev) => {
+        const btn = ev.target.closest(".checkin-btn-custom.checkin-btn[data-kind]");
+        if (btn) ev.preventDefault();
+      });
+      checkinGrid.addEventListener("pointerdown", (ev) => {
+        if (ev.button !== 0) return;
+        const btn = ev.target.closest(".checkin-btn-custom.checkin-btn[data-kind]");
+        if (!btn || btn.disabled) return;
+        const sx = ev.clientX;
+        const sy = ev.clientY;
+        let timer = null;
+        const clearTimer = () => {
+          if (timer) clearTimeout(timer);
+          timer = null;
+        };
+        const onMove = (e) => {
+          if (Math.hypot(e.clientX - sx, e.clientY - sy) > CHECKIN_LONG_PRESS_MOVE_PX) {
+            detach();
+            clearTimer();
+          }
+        };
+        const onUp = () => {
+          detach();
+          clearTimer();
+        };
+        function detach() {
+          window.removeEventListener("pointermove", onMove);
+          window.removeEventListener("pointerup", onUp);
+          window.removeEventListener("pointercancel", onUp);
+        }
+        window.addEventListener("pointermove", onMove, { passive: true });
+        window.addEventListener("pointerup", onUp, { passive: true });
+        window.addEventListener("pointercancel", onUp, { passive: true });
+        timer = setTimeout(() => {
+          timer = null;
+          detach();
+          const kind = btn.getAttribute("data-kind");
+          if (!kind) return;
+          const labelEl = btn.querySelector(".checkin-label");
+          const label = labelEl ? String(labelEl.textContent || "").trim() : kind;
+          checkinSuppressClickKind = kind;
+          openDeleteCheckinKindModal(kind, label || kind);
+          setTimeout(() => {
+            if (checkinSuppressClickKind === kind) checkinSuppressClickKind = null;
+          }, 900);
+        }, CHECKIN_LONG_PRESS_MS);
       });
     }
 
@@ -2368,6 +2550,7 @@
       saveCustomKinds(customs);
       checkinCustomLabelInput.value = "";
       renderCheckinGrid();
+      if (settingsModal.classList.contains("open")) renderSettingsCheckinCustomList();
       showToast("已新增：" + label);
     }
 
@@ -2424,6 +2607,7 @@
     tabCheckin.addEventListener("click", () => switchMainTab("checkin"));
 
     bindCheckinGridClickOnce();
+    bindCheckinGridLongPressOnce();
     renderCheckinGrid();
     checkinCustomAddBtn.addEventListener("click", addCustomCheckinKindFromInput);
     checkinCustomLabelInput.addEventListener("keydown", (ev) => {
