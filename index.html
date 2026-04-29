@@ -109,6 +109,24 @@
       font-weight: 600;
       color: var(--muted);
     }
+    details.list-fold summary .list-fold-trailing {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    details.list-fold summary .list-fold-hint-sep {
+      color: var(--muted);
+      font-weight: 500;
+      user-select: none;
+    }
+    details.list-fold summary .list-fold-hint {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--muted);
+      user-select: none;
+    }
     details.list-fold[open] summary.list-fold-summary {
       border-bottom: 1px solid var(--border);
     }
@@ -775,9 +793,13 @@
   </div>
 
   <details class="card list-fold">
-    <summary class="list-fold-summary">
+    <summary class="list-fold-summary" title="點擊展開或收合紀錄">
       <span>紀錄列表</span>
-      <span class="list-fold-meta" id="listFoldMeta">共 0 筆</span>
+      <span class="list-fold-trailing">
+        <span class="list-fold-meta" id="listFoldMeta">共 0 筆</span>
+        <span class="list-fold-hint-sep" aria-hidden="true">·</span>
+        <span class="list-fold-hint">點開查看</span>
+      </span>
     </summary>
     <div class="list-fold-inner">
       <div id="list"></div>
@@ -820,9 +842,13 @@
       </div>
     </div>
     <details class="card list-fold">
-      <summary class="list-fold-summary">
+      <summary class="list-fold-summary" title="點擊展開或收合最近紀錄">
         <span>最近紀錄</span>
-        <span class="list-fold-meta" id="checkinRecentMeta">共 0 筆</span>
+        <span class="list-fold-trailing">
+          <span class="list-fold-meta" id="checkinRecentMeta">共 0 筆</span>
+          <span class="list-fold-hint-sep" aria-hidden="true">·</span>
+          <span class="list-fold-hint">點開查看</span>
+        </span>
       </summary>
       <div class="list-fold-inner">
         <div id="checkinRecent"></div>
@@ -1344,10 +1370,9 @@
     }
 
     /**
-     * 圖表用：預設順序 → 自訂 → 資料裡出現過的其他 kind（含舊內建）
-     * @param {{ ts: number, kind: string }[]} allCheckins
+     * 圖表用：僅預設四項 + 目前自訂清單。已自訂移除之孤兒 kind 若仍留在打卡資料裡，不進圖表（紀錄列表仍會顯示）。
      */
-    function collectOrderedKindsForCharts(allCheckins) {
+    function collectOrderedKindsForCharts() {
       const seen = new Set();
       /** @type {{ id: string, label: string }[]} */
       const out = [];
@@ -1360,11 +1385,6 @@
           out.push({ id: k.id, label: k.label });
           seen.add(k.id);
         }
-      }
-      for (const c of allCheckins) {
-        if (!c.kind || seen.has(c.kind)) continue;
-        seen.add(c.kind);
-        out.push({ id: c.kind, label: kindLabel(c.kind) });
       }
       return out;
     }
@@ -2224,7 +2244,7 @@
       const c7 = filterSinceDays(all, 7);
       const c30 = filterSinceDays(all, 30);
 
-      const orderedKinds = collectOrderedKindsForCharts(all);
+      const orderedKinds = collectOrderedKindsForCharts();
       const counts7 = orderedKinds.map((k) => c7.filter((c) => c.kind === k.id).length);
       const counts30 = orderedKinds.map((k) => c30.filter((c) => c.kind === k.id).length);
       const pieTotal = counts30.reduce((a, b) => a + b, 0);
