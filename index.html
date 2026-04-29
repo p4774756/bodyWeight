@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0f766e" />
-  <title>體重與打卡</title>
+  <title>每日體重</title>
   <style>
     :root {
       --bg: #f0fdfa;
@@ -25,7 +25,7 @@
       min-height: 100dvh;
       background: var(--bg);
       color: var(--text);
-      padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) calc(88px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+      padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     }
     .app-header-row {
       display: flex;
@@ -66,9 +66,6 @@
       justify-content: flex-end;
       gap: 8px;
       flex-shrink: 0;
-    }
-    #weightHeaderActions[hidden] {
-      display: none !important;
     }
     .entry-open-btn {
       padding: 8px 16px;
@@ -256,161 +253,10 @@
       touch-action: manipulation;
     }
     .empty { color: var(--muted); font-size: 0.9rem; text-align: center; padding: 20px 8px; }
-    .tabbar {
-      position: fixed;
-      z-index: 40;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      display: flex;
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      padding-bottom: env(safe-area-inset-bottom);
-      box-shadow: 0 -6px 24px rgba(15, 118, 110, 0.07);
-    }
-    .tabbar-btn {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 2px;
-      padding: 10px 8px 12px;
-      border: none;
-      background: transparent;
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: var(--muted);
-      cursor: pointer;
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .tabbar-btn[aria-selected="true"] {
-      color: var(--accent);
-    }
-    .tabbar-icon {
-      font-size: 1.35rem;
-      line-height: 1;
-    }
-    .checkin-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-top: 4px;
-    }
-    .checkin-btn {
-      min-height: 92px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 14px 10px;
-      border: none;
-      border-radius: 12px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--text);
-      cursor: pointer;
-      touch-action: manipulation;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    }
-    .checkin-btn:active:not(:disabled) { transform: scale(0.97); }
-    .checkin-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-    .checkin-btn-gym { background: linear-gradient(145deg, #dbeafe, #bfdbfe); }
-    .checkin-btn-jog { background: linear-gradient(145deg, #d1fae5, #a7f3d0); }
-    .checkin-btn-friends { background: linear-gradient(145deg, #fef3c7, #fde68a); }
-    .checkin-btn-partner { background: linear-gradient(145deg, #fce7f3, #fbcfe8); }
-    .checkin-btn-custom {
-      background: linear-gradient(145deg, #e0e7ff, #c7d2fe);
-    }
-    .checkin-add-row {
-      display: flex;
-      gap: 10px;
-      margin-top: 14px;
-      flex-wrap: wrap;
-      align-items: stretch;
-    }
-    .checkin-add-row input {
-      flex: 1;
-      min-width: 120px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      font-size: 0.95rem;
-      background: var(--surface);
-      color: var(--text);
-    }
-    .checkin-add-row button {
-      padding: 10px 16px;
-      border-radius: 10px;
-      border: none;
-      font-weight: 700;
-      font-size: 0.9rem;
-      background: var(--accent);
-      color: #fff;
-      cursor: pointer;
-      touch-action: manipulation;
-      white-space: nowrap;
-    }
-    .checkin-add-row button:active {
-      background: var(--accent-hover);
-      transform: scale(0.98);
-    }
-    .checkin-icon {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 2.5rem;
-      height: 2.5rem;
-      flex-shrink: 0;
-      color: var(--text);
-      opacity: 0.9;
-    }
-    .checkin-icon img {
-      width: 100%;
-      height: 100%;
-      display: block;
-      object-fit: contain;
-      -webkit-user-drag: none;
-      user-select: none;
-      background: transparent;
-      /* 讓去背不完美的淺色底與白邊在漸層按鈕上疊上底色，不浮一塊白；與去背 PNG 並用 */
-      mix-blend-mode: multiply;
-    }
-    .checkin-btn:disabled .checkin-icon {
-      opacity: 0.55;
-    }
-    .checkin-label { text-align: center; line-height: 1.25; }
-    .checkin-subh {
-      font-size: 0.85rem;
-      margin: 0 0 8px;
-      color: var(--muted);
-      font-weight: 600;
-    }
-    .checkin-chart-wrap { height: 200px; margin-top: 4px; }
-    .checkin-chart-stack { height: 240px; margin-top: 4px; }
-    .checkin-chart-pie { height: 220px; margin-top: 4px; max-width: 320px; margin-left: auto; margin-right: auto; }
-    .checkin-log {
-      font-size: 0.88rem;
-      color: var(--muted);
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-    }
-    .checkin-log:last-child { border-bottom: none; }
-    .checkin-log strong { color: var(--text); }
     .toast {
       position: fixed;
       left: 50%;
-      bottom: calc(88px + env(safe-area-inset-bottom));
+      bottom: max(20px, env(safe-area-inset-bottom));
       transform: translateX(-50%) translateY(120px);
       background: var(--text);
       color: #fff;
@@ -428,56 +274,6 @@
       transform: translateX(-50%) translateY(0);
       opacity: 1;
     }
-    .undo-toast {
-      position: fixed;
-      left: 50%;
-      bottom: calc(88px + env(safe-area-inset-bottom));
-      transform: translateX(-50%) translateY(120px);
-      background: var(--text);
-      color: #fff;
-      padding: 10px 12px 10px 18px;
-      border-radius: 999px;
-      font-size: 0.875rem;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      max-width: calc(100vw - 32px);
-      opacity: 0;
-      pointer-events: none;
-      transition: transform 0.25s ease, opacity 0.25s ease;
-      z-index: 11;
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
-    }
-    .undo-toast.show {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .undo-toast-msg { flex: 1; min-width: 0; line-height: 1.35; }
-    .undo-toast-countdown {
-      flex-shrink: 0;
-      font-variant-numeric: tabular-nums;
-      font-weight: 700;
-      font-size: 0.8rem;
-      opacity: 0.88;
-      min-width: 2.75em;
-      text-align: center;
-    }
-    .undo-toast-btn {
-      flex-shrink: 0;
-      padding: 8px 14px;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.45);
-      background: rgba(255, 255, 255, 0.15);
-      color: #fff;
-      font-weight: 700;
-      font-size: 0.85rem;
-      cursor: pointer;
-      touch-action: manipulation;
-    }
-    .undo-toast-btn:active {
-      background: rgba(255, 255, 255, 0.28);
-    }
     .delete-modal {
       position: fixed;
       inset: 0;
@@ -488,7 +284,6 @@
       padding: 20px;
       padding-bottom: max(20px, env(safe-area-inset-bottom));
     }
-    /* 須高於設定面板（210），否則從設定移除項目時確認框會被擋住 */
     #deleteModal.delete-modal {
       z-index: 212;
     }
@@ -517,52 +312,6 @@
       line-height: 1.45;
     }
     .settings-modal-scroll > h3 { margin: 0 0 6px; font-size: 1.1rem; }
-    .settings-modal-scroll h3.settings-checkin-custom-h3 {
-      margin-top: 22px;
-    }
-    .settings-checkin-custom-list {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-      background: #fafafa;
-    }
-    .settings-checkin-custom-empty {
-      margin: 0;
-      padding: 14px 12px;
-      font-size: 0.88rem;
-      color: var(--muted);
-      line-height: 1.45;
-    }
-    .settings-checkin-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--border);
-      background: var(--surface);
-    }
-    .settings-checkin-row:last-child {
-      border-bottom: none;
-    }
-    .settings-checkin-name {
-      font-weight: 600;
-      font-size: 0.92rem;
-      min-width: 0;
-      word-break: break-word;
-    }
-    .settings-checkin-del {
-      flex-shrink: 0;
-      padding: 8px 12px;
-      font-size: 0.8rem;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: #fff;
-      color: var(--danger);
-      font-weight: 600;
-      cursor: pointer;
-      touch-action: manipulation;
-    }
     .btn-close-settings {
       width: 100%;
       margin: 0;
@@ -766,16 +515,14 @@
       </div>
       <div class="app-header-actions">
         <button type="button" class="settings-btn" id="accountBtn" aria-haspopup="dialog" aria-controls="authModal" aria-expanded="false">帳號</button>
-        <div id="weightHeaderActions">
-          <button type="button" class="entry-open-btn" id="entryOpenBtn" aria-haspopup="dialog" aria-controls="entryModal" aria-expanded="false">新增</button>
-          <button type="button" class="settings-btn" id="settingsBtn" aria-haspopup="dialog" aria-controls="settingsModal" aria-expanded="false">設定</button>
-        </div>
+        <button type="button" class="entry-open-btn" id="entryOpenBtn" aria-haspopup="dialog" aria-controls="entryModal" aria-expanded="false">新增</button>
+        <button type="button" class="settings-btn" id="settingsBtn" aria-haspopup="dialog" aria-controls="settingsModal" aria-expanded="false">設定</button>
       </div>
     </div>
   </header>
 
   <main class="app-main">
-  <section id="viewWeight" class="app-view" role="tabpanel" aria-labelledby="tabWeight">
+  <section id="viewWeight" class="app-view">
   <div class="card">
     <h2 style="margin:0 0 4px;font-size:1rem;">體重曲線</h2>
     <p class="subtitle" style="margin:0 0 8px;">依日期排序，至少兩筆會比較好看</p>
@@ -807,75 +554,9 @@
     </div>
   </details>
   </section>
-
-  <section id="viewCheckin" class="app-view" role="tabpanel" aria-labelledby="tabCheckin" hidden>
-    <div class="card">
-      <div class="list-header">
-        <h2>一鍵打卡</h2>
-      </div>
-      <p class="subtitle" style="margin-top:0">按一下立刻記錄此刻（每個項目每天最多一次）。誤觸可在底部深色橫條點「復原」（約 6 秒內）。自訂項目（紫色按鈕）可<strong>長按約半秒</strong>移除，或到<strong>設定</strong>裡管理。</p>
-      <div class="checkin-grid" id="checkinGrid"></div>
-      <div class="checkin-add-row">
-        <input type="text" id="checkinCustomLabel" maxlength="20" placeholder="其他習慣名稱…" enterkeyhint="done" autocomplete="off" />
-        <button type="button" id="checkinCustomAddBtn">新增項目</button>
-      </div>
-    </div>
-    <div class="card">
-      <div class="list-header">
-        <h2>頻率與分析</h2>
-      </div>
-      <p class="subtitle" style="margin-top:0">皆以圖表呈現</p>
-      <p id="checkinChartEmpty" class="empty" style="padding:12px 0;margin:0;display:none;">尚無打卡資料，請先使用上方一鍵打卡。</p>
-      <div id="checkinChartsBlock">
-        <h3 class="checkin-subh">近 7 天 · 各項次數</h3>
-        <div class="chart-wrap checkin-chart-wrap">
-          <canvas id="checkinChartBar7" aria-label="近七天各項打卡次數"></canvas>
-        </div>
-        <h3 class="checkin-subh">近 30 天 · 每日次數（堆疊）</h3>
-        <div class="chart-wrap checkin-chart-stack">
-          <canvas id="checkinChartStack30" aria-label="近三十天每日打卡堆疊圖"></canvas>
-        </div>
-        <h3 class="checkin-subh">近 30 天 · 類型占比</h3>
-        <div class="chart-wrap checkin-chart-pie">
-          <canvas id="checkinChartPie30" aria-label="近三十天打卡類型占比"></canvas>
-        </div>
-      </div>
-    </div>
-    <details class="card list-fold">
-      <summary class="list-fold-summary" title="點擊展開或收合最近紀錄">
-        <span>最近紀錄</span>
-        <span class="list-fold-trailing">
-          <span class="list-fold-meta" id="checkinRecentMeta">共 0 筆</span>
-          <span class="list-fold-hint-sep" aria-hidden="true">·</span>
-          <span class="list-fold-hint">點開查看</span>
-        </span>
-      </summary>
-      <div class="list-fold-inner">
-        <div id="checkinRecent"></div>
-        <p class="list-fold-note" id="checkinRecentNote" hidden></p>
-      </div>
-    </details>
-  </section>
   </main>
 
-  <nav class="tabbar" role="tablist" aria-label="主選單">
-    <button type="button" class="tabbar-btn" role="tab" id="tabWeight" aria-controls="viewWeight" aria-selected="true">
-      <span class="tabbar-icon" aria-hidden="true">⚖️</span>
-      <span>體重</span>
-    </button>
-    <button type="button" class="tabbar-btn" role="tab" id="tabCheckin" aria-controls="viewCheckin" aria-selected="false">
-      <span class="tabbar-icon" aria-hidden="true">✅</span>
-      <span>打卡</span>
-    </button>
-  </nav>
-
   <div class="toast" id="toast" role="status"></div>
-
-  <div id="undoToast" class="undo-toast" role="status" aria-live="polite" aria-atomic="true" hidden>
-    <span class="undo-toast-msg" id="undoToastMsg"></span>
-    <span id="undoToastCountdown" class="undo-toast-countdown" aria-hidden="true"></span>
-    <button type="button" class="undo-toast-btn" id="undoToastBtn">復原</button>
-  </div>
 
   <div id="entryModal" class="delete-modal entry-modal" hidden aria-hidden="true">
     <div class="delete-modal-backdrop" id="entryModalBackdrop" tabindex="-1"></div>
@@ -916,9 +597,6 @@
         <button type="button" class="btn-ghost" id="goalClearBtn">清除目標</button>
         <div id="goalStats" class="goal-stats" style="margin-top:16px;"></div>
         <p id="encourageLine" class="encourage-line" aria-live="polite"></p>
-        <h3 class="settings-checkin-custom-h3">自訂打卡項目</h3>
-        <p class="settings-modal-lead" style="margin-top:0">在「打卡」分頁新增的習慣捷徑。移除後格子上的按鈕會消失，過去的打卡紀錄仍會保留。</p>
-        <div id="settingsCheckinCustomList" class="settings-checkin-custom-list" role="list"></div>
       </div>
       <button type="button" class="btn-close-settings" id="settingsCloseBtn">關閉</button>
     </div>
@@ -996,9 +674,6 @@
   <script>
     const STORAGE_KEY = "bodyWeight.entries.v1";
     const GOAL_KEY = "bodyWeight.goal.v1";
-    const CHECKIN_KEY = "bodyWeight.checkins.v1";
-    const CHECKIN_CUSTOM_KINDS_KEY = "bodyWeight.checkinCustomKinds.v1";
-
     const firebaseConfig = {
       apiKey: "AIzaSyDm_1r1vvsqbuWUbWShbc5IFIRBjq6IYpk",
       authDomain: "my-habbit-record.firebaseapp.com",
@@ -1023,25 +698,18 @@
       return firebaseDb.collection("users").doc(uid).collection("sync").doc("bundle");
     }
 
-    /** @returns {{ entries: Entry[], goal: Goal, checkins: { ts: number, kind: string }[], checkinCustomKinds: { id: string, label: string }[] }} */
+    /** @returns {{ entries: Entry[], goal: Goal }} */
     function collectLocalBundle() {
       return {
         entries: loadEntries(),
         goal: loadGoal(),
-        checkins: loadCheckins(),
-        checkinCustomKinds: loadCustomKinds(),
       };
     }
 
     function localBundleHasMeaningfulData(b) {
       const g = b.goal;
       const hasGoal = !!(g && g.targetDate && g.targetWeight != null);
-      return (
-        (b.entries && b.entries.length > 0) ||
-        hasGoal ||
-        (b.checkins && b.checkins.length > 0) ||
-        (b.checkinCustomKinds && b.checkinCustomKinds.length > 0)
-      );
+      return (b.entries && b.entries.length > 0) || hasGoal;
     }
 
     function cloudBundleHasMeaningfulData(data) {
@@ -1049,17 +717,13 @@
       const g = data.goal;
       const hasGoal = g && typeof g.targetDate === "string" && g.targetWeight != null;
       const entries = Array.isArray(data.entries) ? data.entries : [];
-      const checkins = Array.isArray(data.checkins) ? data.checkins : [];
-      const kinds = Array.isArray(data.checkinCustomKinds) ? data.checkinCustomKinds : [];
-      return entries.length > 0 || hasGoal || checkins.length > 0 || kinds.length > 0;
+      return entries.length > 0 || hasGoal;
     }
 
     function bundlesFingerprint(b) {
       return JSON.stringify({
         entries: b.entries || [],
         goal: b.goal || { targetDate: null, targetWeight: null },
-        checkins: b.checkins || [],
-        checkinCustomKinds: b.checkinCustomKinds || [],
       });
     }
 
@@ -1089,13 +753,11 @@
                   typeof d.goal.targetWeight === "number" && !Number.isNaN(d.goal.targetWeight) ? d.goal.targetWeight : null,
               }
             : { targetDate: null, targetWeight: null },
-        checkins: Array.isArray(d.checkins) ? d.checkins : [],
-        checkinCustomKinds: Array.isArray(d.checkinCustomKinds) ? d.checkinCustomKinds : [],
         updatedAt: d.updatedAt || null,
       };
     }
 
-    /** @param {{ entries?: Entry[], goal?: Goal, checkins?: unknown[], checkinCustomKinds?: unknown[] }} cloud */
+    /** @param {{ entries?: Entry[], goal?: Goal }} cloud */
     function applyCloudBundleToLocal(cloud) {
       suppressCloudPush = true;
       try {
@@ -1113,31 +775,6 @@
         const tw = parseFloat(String(g.targetWeight ?? "").replace(",", "."));
         const targetWeight = !Number.isNaN(tw) && tw > 0 ? tw : null;
         localStorage.setItem(GOAL_KEY, JSON.stringify({ targetDate, targetWeight }));
-        if (Array.isArray(cloud.checkins)) {
-          const rows = cloud.checkins
-            .filter((c) => c && typeof c.ts === "number" && typeof c.kind === "string" && isValidStoredCheckinKind(c.kind))
-            .map((c) => ({ ts: c.ts, kind: c.kind.trim() }));
-          localStorage.setItem(CHECKIN_KEY, JSON.stringify(rows.slice(-5000)));
-        } else {
-          localStorage.setItem(CHECKIN_KEY, JSON.stringify([]));
-        }
-        if (Array.isArray(cloud.checkinCustomKinds)) {
-          const customs = [];
-          const seen = new Set();
-          for (const o of cloud.checkinCustomKinds) {
-            if (!o || typeof o.id !== "string" || typeof o.label !== "string") continue;
-            const id = o.id.trim();
-            const label = o.label.trim().slice(0, 20);
-            if (!id || !label) continue;
-            if (!/^c[a-z0-9]+$/i.test(id)) continue;
-            if (seen.has(id)) continue;
-            seen.add(id);
-            customs.push({ id, label });
-          }
-          localStorage.setItem(CHECKIN_CUSTOM_KINDS_KEY, JSON.stringify(customs.slice(0, CHECKIN_CUSTOM_KIND_MAX)));
-        } else {
-          localStorage.setItem(CHECKIN_CUSTOM_KINDS_KEY, JSON.stringify([]));
-        }
       } finally {
         suppressCloudPush = false;
       }
@@ -1148,8 +785,6 @@
       await bundleDocRef(uid).set({
         entries: b.entries,
         goal: b.goal,
-        checkins: b.checkins.slice(-5000),
-        checkinCustomKinds: b.checkinCustomKinds,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
     }
@@ -1195,8 +830,6 @@
           bundlesFingerprint({
             entries: cloudData.entries,
             goal: cloudData.goal,
-            checkins: cloudData.checkins,
-            checkinCustomKinds: cloudData.checkinCustomKinds,
           }) === bundlesFingerprint(localB);
 
         const mergeModal = document.getElementById("mergeModal");
@@ -1208,7 +841,7 @@
         pickCloud.disabled = false;
 
         let summaryHtml = `<strong>雲端最近更新時間：</strong>${escapeHtml(cloudTimeStr)}<br>`;
-        summaryHtml += `<strong>本機：</strong>體重 ${localB.entries.length} 筆、打卡 ${localB.checkins.length} 筆`;
+        summaryHtml += `<strong>本機：</strong>體重紀錄 ${localB.entries.length} 筆`;
         if (same) summaryHtml += "<br><span style=\"color:var(--muted)\">（本機與雲端內容相同，仍可依需要選擇覆蓋方向）</span>";
         mergeSummary.innerHTML = summaryHtml;
 
@@ -1286,8 +919,6 @@
           applyCloudBundleToLocal({
             entries: [],
             goal: { targetDate: null, targetWeight: null },
-            checkins: [],
-            checkinCustomKinds: [],
           });
         }
       } catch (e) {
@@ -1296,8 +927,6 @@
         return;
       }
       refresh();
-      renderCheckinGrid();
-      renderCheckinPanel();
       syncGoalFormFromStorage();
       showToast("同步完成");
     }
@@ -1312,132 +941,12 @@
       void refreshAuthLoggedPanel();
     }
 
-    /** 預設一鍵打卡（固定四項） */
-    const CHECK_KINDS_PRESET = [
-      { id: "gym", label: "重訓" },
-      { id: "jog", label: "慢跑" },
-      { id: "friends", label: "看六人行" },
-      { id: "partner", label: "跟女友做愛" },
-    ];
-
-    /** 舊版內建項目：僅供歷史紀錄與圖表顯示標籤 */
-    const LEGACY_KIND_LABELS = {
-      drink: "喝飲料",
-      adult: "看A片",
-      bird: "玩鳥",
-    };
-
-    const CHECKIN_ICON_IDS = new Set(["gym", "jog", "friends", "partner"]);
-    const CHECKIN_ICON_DIR = "assets/checkin";
-    /** 圖更換去背或檔變更時遞增，破壞手機瀏覽器/Edge 的圖片快取 */
-    const CHECKIN_ICON_VERSION = "4";
-    const CHECKIN_CUSTOM_KIND_MAX = 16;
-
-    /** @returns {{ id: string, label: string }[]} */
-    function loadCustomKinds() {
-      try {
-        const raw = localStorage.getItem(CHECKIN_CUSTOM_KINDS_KEY);
-        if (!raw) return [];
-        const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) return [];
-        const seen = new Set();
-        const out = [];
-        for (const o of parsed) {
-          if (!o || typeof o.id !== "string" || typeof o.label !== "string") continue;
-          const id = o.id.trim();
-          const label = o.label.trim().slice(0, 20);
-          if (!id || !label) continue;
-          if (!/^c[a-z0-9]+$/i.test(id)) continue;
-          if (seen.has(id)) continue;
-          seen.add(id);
-          out.push({ id, label });
-        }
-        return out.slice(0, CHECKIN_CUSTOM_KIND_MAX);
-      } catch {
-        return [];
-      }
-    }
-
-    /** @param {{ id: string, label: string }[]} rows */
-    function saveCustomKinds(rows) {
-      localStorage.setItem(CHECKIN_CUSTOM_KINDS_KEY, JSON.stringify(rows.slice(0, CHECKIN_CUSTOM_KIND_MAX)));
-      scheduleCloudPushIfAuthed();
-    }
-
-    /** 打卡按鈕：預設四項 + 自訂 */
-    function getCheckinButtonKinds() {
-      return [...CHECK_KINDS_PRESET, ...loadCustomKinds()];
-    }
-
-    /**
-     * 圖表用：僅預設四項 + 目前自訂清單。已自訂移除之孤兒 kind 若仍留在打卡資料裡，不進圖表（紀錄列表仍會顯示）。
-     */
-    function collectOrderedKindsForCharts() {
-      const seen = new Set();
-      /** @type {{ id: string, label: string }[]} */
-      const out = [];
-      for (const k of CHECK_KINDS_PRESET) {
-        out.push({ id: k.id, label: k.label });
-        seen.add(k.id);
-      }
-      for (const k of loadCustomKinds()) {
-        if (!seen.has(k.id)) {
-          out.push({ id: k.id, label: k.label });
-          seen.add(k.id);
-        }
-      }
-      return out;
-    }
-
     function escapeHtml(s) {
       return String(s)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
-    }
-
-    /** @param {string} id */
-    function removeCustomCheckinKindById(id) {
-      const customs = loadCustomKinds().filter((k) => k.id !== id);
-      saveCustomKinds(customs);
-      renderCheckinGrid();
-      renderCheckinPanel();
-      if (settingsModal.classList.contains("open")) renderSettingsCheckinCustomList();
-    }
-
-    function renderSettingsCheckinCustomList() {
-      if (!settingsCheckinCustomList) return;
-      const customs = loadCustomKinds();
-      if (customs.length === 0) {
-        settingsCheckinCustomList.innerHTML =
-          '<p class="settings-checkin-custom-empty">目前沒有自訂項目。請切換到「打卡」分頁，在下方輸入名稱後按「新增項目」。</p>';
-        return;
-      }
-      settingsCheckinCustomList.innerHTML = customs
-        .map(
-          (k) =>
-            `<div class="settings-checkin-row" role="listitem"><span class="settings-checkin-name">${escapeHtml(k.label)}</span><button type="button" class="settings-checkin-del" data-checkin-kind-id="${escapeHtml(k.id)}">移除</button></div>`
-        )
-        .join("");
-    }
-
-    /**
-     * 預設四項用手繪 PNG；其餘用簡單 SVG
-     * @param {string} id
-     * @returns {string}
-     */
-    function checkinIconHtml(id) {
-      if (CHECKIN_ICON_IDS.has(id)) {
-        const q = new URLSearchParams({ v: CHECKIN_ICON_VERSION });
-        const src = `${CHECKIN_ICON_DIR}/${id}.png?${q.toString()}`;
-        return `<span class="checkin-icon" aria-hidden="true"><img src="${src}" alt="" width="40" height="40" loading="lazy" decoding="async" fetchpriority="low" /></span>`;
-      }
-      const svg =
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-        '<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>' +
-        "</svg>";
-      return `<span class="checkin-icon" aria-hidden="true">${svg}</span>`;
     }
 
     /** @typedef {{ date: string, weight: number }} Entry */
@@ -1490,34 +999,6 @@
       scheduleCloudPushIfAuthed();
     }
 
-    function isValidStoredCheckinKind(s) {
-      if (!s || typeof s !== "string") return false;
-      const t = s.trim();
-      if (t.length < 1 || t.length > 48) return false;
-      if (/[<>"']/.test(t)) return false;
-      return true;
-    }
-
-    function loadCheckins() {
-      try {
-        const raw = localStorage.getItem(CHECKIN_KEY);
-        if (!raw) return [];
-        const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) return [];
-        return parsed
-          .filter((c) => c && typeof c.ts === "number" && typeof c.kind === "string" && isValidStoredCheckinKind(c.kind))
-          .map((c) => ({ ts: c.ts, kind: c.kind.trim() }));
-      } catch {
-        return [];
-      }
-    }
-
-    /** @param {{ ts: number, kind: string }[]} rows */
-    function saveCheckins(rows) {
-      localStorage.setItem(CHECKIN_KEY, JSON.stringify(rows.slice(-5000)));
-      scheduleCloudPushIfAuthed();
-    }
-
     function parseISODateLocal(iso) {
       const p = iso.split("-").map(Number);
       return new Date(p[0], p[1] - 1, p[2]);
@@ -1532,44 +1013,44 @@
 
     const ENC = {
       noGoal: [
-        "先為自己訂一個日期與數字吧，就像幫未來的你留一盞燈。",
-        "有目標的路比較不容易迷路，從現在開始一點一點來。",
-        "今天就可以填：想在哪一天看見什麼樣的自己？",
-        "小小目標也是承諾，你值得一份對自己的溫柔約定。",
+        "「人的夢想，是不會終結的！」——先寫下你的目標日期與數字，航路要從這裡畫起。",
+        "在這片海上，最自由的人就是海賊王。今天，先為自己訂一個目的地吧。",
+        "我要成為海賊王！——你也要成為「更好的自己」吧？從設定目標開始。",
+        "沒有羅盤的船會迷路；先填目標，你的偉大航道才開得出去。",
       ],
       noEntry: [
-        "有了目標之後，開始記錄幾天的體重吧，線索會慢慢浮現。",
-        "每一筆數字都是在對身體說：我在聽你說話。",
-        "不用完美，只要誠實。今天先記一筆看看？",
-        "曲線會起伏，但長期趨勢很誠實，我們一起把它畫出來。",
+        "連一次紀錄都沒有，怎麼叫冒險？今天先打一筆體重吧。",
+        "受點小挫折沒什麼，男人（和女人）都是在跌倒裡變強的。",
+        "只要還活著，就有無限的可能性——從今天的一筆數字出發。",
+        "前方還有千千萬萬座島，航跡要一筆一筆畫出來。",
       ],
       needLose: [
-        "差一點點也是進展，身體正在慢慢聽懂你的意圖。",
-        "體重像海浪有起伏，你看的是整體方向，不是某一朵浪花。",
-        "不必和別人比，你今天的曲線只屬於你。",
-        "給自己多一點睡眠與水分，有時比多餓一餐更有用。",
-        "只要持續紀錄，你就已經在做很多人做不來的事了。",
+        "要是這點都受不了，就別談夢想了。——但我們可以一小步一小步來。",
+        "海浪會起會落，體重也會；重要的是航向沒偏、你還在船上。",
+        "背負著野心的人，怎能在半路上就停下來？——再撐一下，下一站就在前面。",
+        "羅傑也好、魯夫也好，都是一步一步走到今天的。你也一樣。",
+        "別在這裡說「我不行了」——再堅持一下，下一站就在前面。",
       ],
       belowTarget: [
-        "你已經比目標更輕，若這不符合現在的計畫，隨時可以調整目標。",
-        "數字之外，也留意力氣、心情與身體訊號，健康比體重更寬。",
-        "太輕與太重一樣需要照顧，必要時諮詢專業也很有勇氣。",
-        "目標可以改，健康優先，你永遠可以重新出發。",
+        "你已經比目標更「輕航」了；路線要改，隨時重畫地圖就好。",
+        "強不是只看數字，身體的信號、力氣與心情也很重要。",
+        "太輕與太重都要小心——必要時找個船醫（專業）商量，不丟臉。",
+        "終點的座標可以改，好好活著、好好航行才最重要。",
       ],
       achieved: [
-        "已經非常非常接近目標了，這很值得為自己拍拍手。",
-        "讓人佩服的不是一次衝刺，而是你願意每天回來看看。",
-        "你真的有在照顧自己，這一點比任何數字都重要。",
-        "接下來好好維持，或為自己設下一個健康的新目標吧！",
+        "了不起！你已經站到離目標很近的地方了——這不是偶然，是每天累積的路。",
+        "這片海你沒白走；接下來要往哪座島，由你決定。",
+        "像魯夫一遍遍說「我要成為海賊王！」那樣，你也在實踐自己的承諾。",
+        "讓人佩服的不是一次爆衝，而是你願意每天回來看自己的航跡。",
       ],
       pastDate: [
-        "目標日過了也別灰心，可以微調日期或體重，再出發一次。",
-        "計畫永遠可以更新，重要的是你還在場上。",
-        "重新訂一個讓自己睡得著、吃得飽的目標也很好。",
+        "錯過目標日？沒關係，偉大航道都能改道，日期也可以重寫。",
+        "重要的不是哪一天抵達，是你還在船上、還願意往前。",
+        "重新訂一個讓自己睡得著、吃得飽的座標，再出發就好。",
       ],
       genericClose: [
-        "進步常常不是直線，而是迂迴上升，這很正常。",
-        "閉上眼睛想像達標那天，醒來後今天的你仍然可以往前一步。",
+        "通往夢想的路從來不是直線，迂迴上升也很帥。",
+        "今天倒下，明天再站起來——大航海一直都是這樣。",
       ],
     };
 
@@ -1579,75 +1060,11 @@
       return arr[i];
     }
 
-    function kindLabel(kind) {
-      const p = CHECK_KINDS_PRESET.find((x) => x.id === kind);
-      if (p) return p.label;
-      const c = loadCustomKinds().find((x) => x.id === kind);
-      if (c) return c.label;
-      if (Object.prototype.hasOwnProperty.call(LEGACY_KIND_LABELS, kind)) {
-        return LEGACY_KIND_LABELS[kind];
-      }
-      return kind;
-    }
-
-    function localDayKey(ts) {
-      const d = new Date(ts);
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    }
-
-    /** @param {{ ts: number, kind: string }[]} checkins */
-    function filterSinceDays(checkins, days) {
-      const cutoff = Date.now() - days * 86400000;
-      return checkins.filter((c) => c.ts >= cutoff);
-    }
-
-    const CHECKIN_CHART_COLORS = [
-      "#60a5fa",
-      "#34d399",
-      "#fbbf24",
-      "#f472b6",
-      "#a78bfa",
-      "#fb7185",
-      "#2dd4bf",
-    ];
-
-    function lastNDaysIso(n) {
-      const out = [];
-      const end = new Date();
-      end.setHours(0, 0, 0, 0);
-      for (let i = n - 1; i >= 0; i--) {
-        const d = new Date(end);
-        d.setDate(d.getDate() - i);
-        out.push(
-          `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
-        );
-      }
-      return out;
-    }
-
-    function countKindInDay(checkins, iso, kindId) {
-      const t0 = parseISODateLocal(iso).getTime();
-      const t1 = t0 + 86400000;
-      return checkins.filter((c) => c.kind === kindId && c.ts >= t0 && c.ts < t1).length;
-    }
-
-    /** 今日已打卡的 kind（本地日曆、每項最多一筆） */
-    function kindsCheckedInLocalToday(checkins) {
-      const todayKey = localDayKey(Date.now());
-      return new Set(
-        checkins.filter((c) => localDayKey(c.ts) === todayKey).map((c) => c.kind)
-      );
-    }
-
     const dateInput = document.getElementById("date");
     const weightInput = document.getElementById("weight");
     const saveBtn = document.getElementById("saveBtn");
     const listEl = document.getElementById("list");
     const toastEl = document.getElementById("toast");
-    const undoToast = document.getElementById("undoToast");
-    const undoToastMsg = document.getElementById("undoToastMsg");
-    const undoToastCountdown = document.getElementById("undoToastCountdown");
-    const undoToastBtn = document.getElementById("undoToastBtn");
     const chartCanvas = document.getElementById("chart");
     const deleteModal = document.getElementById("deleteModal");
     const deleteModalTitle = document.getElementById("deleteModalTitle");
@@ -1661,27 +1078,10 @@
     const goalClearBtn = document.getElementById("goalClearBtn");
     const goalStatsEl = document.getElementById("goalStats");
     const encourageLineEl = document.getElementById("encourageLine");
-    const tabWeight = document.getElementById("tabWeight");
-    const tabCheckin = document.getElementById("tabCheckin");
-    const viewWeight = document.getElementById("viewWeight");
-    const viewCheckin = document.getElementById("viewCheckin");
-    const appTitle = document.getElementById("appTitle");
     const appSubtitle = document.getElementById("appSubtitle");
-    const checkinGrid = document.getElementById("checkinGrid");
-    const checkinCustomLabelInput = document.getElementById("checkinCustomLabel");
-    const checkinCustomAddBtn = document.getElementById("checkinCustomAddBtn");
-    const checkinRecent = document.getElementById("checkinRecent");
-    const checkinRecentMeta = document.getElementById("checkinRecentMeta");
-    const checkinRecentNote = document.getElementById("checkinRecentNote");
-    const checkinCanvasBar7 = document.getElementById("checkinChartBar7");
-    const checkinCanvasStack30 = document.getElementById("checkinChartStack30");
-    const checkinCanvasPie30 = document.getElementById("checkinChartPie30");
-    const checkinChartEmpty = document.getElementById("checkinChartEmpty");
-    const checkinChartsBlock = document.getElementById("checkinChartsBlock");
     const settingsModal = document.getElementById("settingsModal");
     const settingsModalBackdrop = document.getElementById("settingsModalBackdrop");
     const settingsCloseBtn = document.getElementById("settingsCloseBtn");
-    const settingsCheckinCustomList = document.getElementById("settingsCheckinCustomList");
     const settingsBtn = document.getElementById("settingsBtn");
     const entryModal = document.getElementById("entryModal");
     const entryModalBackdrop = document.getElementById("entryModalBackdrop");
@@ -1691,7 +1091,6 @@
     const encourageLineMainEl = document.getElementById("encourageLineMain");
     const listFoldMeta = document.getElementById("listFoldMeta");
     const listFoldNote = document.getElementById("listFoldNote");
-    const weightHeaderActions = document.getElementById("weightHeaderActions");
     const accountBtn = document.getElementById("accountBtn");
     const authModal = document.getElementById("authModal");
     const authModalBackdrop = document.getElementById("authModalBackdrop");
@@ -1762,12 +1161,6 @@
     const LIST_RECENT_MAX = 8;
 
     let pendingDeleteDate = null;
-    /** @type {{ id: string, label: string } | null} */
-    let pendingDeleteCheckinKind = null;
-    /** 長按刪除後，擋下同一顆自訂按鈕誤觸發的 click；逾時自動清除 */
-    let checkinSuppressClickKind = null;
-    /** @type {"weight"|"checkin"} */
-    let mainTab = "weight";
 
     function openEntryModal() {
       dateInput.value = todayISO();
@@ -1793,7 +1186,6 @@
       settingsBtn.setAttribute("aria-expanded", "true");
       syncGoalFormFromStorage();
       renderGoalInsight();
-      renderSettingsCheckinCustomList();
     }
 
     function closeSettingsModal() {
@@ -1804,7 +1196,6 @@
     }
 
     function openDeleteModal(date) {
-      pendingDeleteCheckinKind = null;
       pendingDeleteDate = date;
       deleteModalTitle.textContent = "刪除紀錄";
       deleteModalMsg.textContent = `確定要刪除 ${date} 的體重紀錄嗎？此動作無法復原。`;
@@ -1813,34 +1204,14 @@
       deleteModal.setAttribute("aria-hidden", "false");
     }
 
-    /** @param {string} id @param {string} label */
-    function openDeleteCheckinKindModal(id, label) {
-      pendingDeleteDate = null;
-      pendingDeleteCheckinKind = { id, label };
-      deleteModalTitle.textContent = "移除自訂打卡";
-      deleteModalMsg.textContent = `確定要移除「${label}」嗎？格子上將不再顯示此按鈕；過去的打卡紀錄仍會保留。`;
-      deleteModal.hidden = false;
-      deleteModal.classList.add("open");
-      deleteModal.setAttribute("aria-hidden", "false");
-    }
-
     function closeDeleteModal() {
       pendingDeleteDate = null;
-      pendingDeleteCheckinKind = null;
-      checkinSuppressClickKind = null;
       deleteModal.classList.remove("open");
       deleteModal.hidden = true;
       deleteModal.setAttribute("aria-hidden", "true");
     }
 
     function runPendingDelete() {
-      if (pendingDeleteCheckinKind) {
-        const { id, label } = pendingDeleteCheckinKind;
-        closeDeleteModal();
-        removeCustomCheckinKindById(id);
-        showToast("已移除：" + label);
-        return;
-      }
       if (!pendingDeleteDate) return;
       const date = pendingDeleteDate;
       closeDeleteModal();
@@ -1859,15 +1230,6 @@
     settingsBtn.addEventListener("click", openSettingsModal);
     settingsModalBackdrop.addEventListener("click", closeSettingsModal);
     settingsCloseBtn.addEventListener("click", closeSettingsModal);
-    settingsCheckinCustomList.addEventListener("click", (ev) => {
-      const delBtn = ev.target.closest(".settings-checkin-del");
-      if (!delBtn) return;
-      const id = delBtn.getAttribute("data-checkin-kind-id");
-      if (!id) return;
-      const row = loadCustomKinds().find((x) => x.id === id);
-      const label = row ? row.label : id;
-      openDeleteCheckinKindModal(id, label);
-    });
     document.addEventListener("keydown", (ev) => {
       if (ev.key !== "Escape") return;
       if (mergeModal.classList.contains("open")) {
@@ -1981,66 +1343,8 @@
     }
 
     let chartInstance = null;
-    let checkinBar7 = null;
-    let checkinStack30 = null;
-    let checkinPie30 = null;
-
-    function destroyCheckinCharts() {
-      if (checkinBar7) {
-        checkinBar7.destroy();
-        checkinBar7 = null;
-      }
-      if (checkinStack30) {
-        checkinStack30.destroy();
-        checkinStack30 = null;
-      }
-      if (checkinPie30) {
-        checkinPie30.destroy();
-        checkinPie30 = null;
-      }
-    }
-
-    const UNDO_CHECKIN_MS = 6000;
-    /** @type {{ ts: number, kind: string } | null} */
-    let pendingUndoCheckin = null;
-    let undoCheckinTimer = null;
-    /** @type {number | null} */
-    let undoCheckinCountdownTimer = null;
-    let undoToastDeadline = 0;
-
-    function hideUndoCheckinToast() {
-      undoToast.classList.remove("show");
-      undoToast.setAttribute("hidden", "");
-      undoToast.setAttribute("aria-hidden", "true");
-      clearTimeout(undoCheckinTimer);
-      undoCheckinTimer = null;
-      clearInterval(undoCheckinCountdownTimer);
-      undoCheckinCountdownTimer = null;
-      pendingUndoCheckin = null;
-      undoToastCountdown.textContent = "";
-    }
-
-    function showUndoCheckinToast(ts, kind) {
-      clearTimeout(undoCheckinTimer);
-      clearInterval(undoCheckinCountdownTimer);
-      toastEl.classList.remove("show");
-      pendingUndoCheckin = { ts, kind };
-      undoToastMsg.textContent = `已打卡：${kindLabel(kind)}`;
-      undoToastDeadline = Date.now() + UNDO_CHECKIN_MS;
-      const tickCountdown = () => {
-        const leftSec = Math.max(0, Math.ceil((undoToastDeadline - Date.now()) / 1000));
-        undoToastCountdown.textContent = leftSec > 0 ? `${leftSec} 秒` : "";
-      };
-      tickCountdown();
-      undoCheckinCountdownTimer = setInterval(tickCountdown, 250);
-      undoToast.removeAttribute("hidden");
-      undoToast.setAttribute("aria-hidden", "false");
-      undoToast.classList.add("show");
-      undoCheckinTimer = setTimeout(() => hideUndoCheckinToast(), UNDO_CHECKIN_MS);
-    }
 
     function showToast(msg) {
-      hideUndoCheckinToast();
       toastEl.textContent = msg;
       toastEl.classList.add("show");
       clearTimeout(showToast._t);
@@ -2229,413 +1533,12 @@
       openDeleteModal(date);
     });
 
-    function updateCheckinButtonsForToday() {
-      const done = kindsCheckedInLocalToday(loadCheckins());
-      checkinGrid.querySelectorAll(".checkin-btn[data-kind]").forEach((btn) => {
-        const k = btn.getAttribute("data-kind");
-        if (!k) return;
-        btn.disabled = done.has(k);
-      });
-    }
-
-    function renderCheckinPanel() {
-      updateCheckinButtonsForToday();
-      const all = loadCheckins();
-      const c7 = filterSinceDays(all, 7);
-      const c30 = filterSinceDays(all, 30);
-
-      const orderedKinds = collectOrderedKindsForCharts();
-      const counts7 = orderedKinds.map((k) => c7.filter((c) => c.kind === k.id).length);
-      const counts30 = orderedKinds.map((k) => c30.filter((c) => c.kind === k.id).length);
-      const pieTotal = counts30.reduce((a, b) => a + b, 0);
-
-      if (all.length === 0) {
-        destroyCheckinCharts();
-        checkinChartEmpty.style.display = "block";
-        checkinChartsBlock.style.display = "none";
-      } else {
-        checkinChartEmpty.style.display = "none";
-        checkinChartsBlock.style.display = "block";
-        destroyCheckinCharts();
-
-        const barColors = orderedKinds.map((_, i) => CHECKIN_CHART_COLORS[i % CHECKIN_CHART_COLORS.length]);
-        checkinBar7 = new Chart(checkinCanvasBar7, {
-          type: "bar",
-          data: {
-            labels: orderedKinds.map((k) => k.label),
-            datasets: [
-              {
-                label: "近 7 天次數",
-                data: counts7,
-                backgroundColor: barColors,
-                borderRadius: 6,
-                borderSkipped: false,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: "y",
-            scales: {
-              x: {
-                beginAtZero: true,
-                ticks: { stepSize: 1, precision: 0 },
-                grid: { color: "rgba(20, 78, 74, 0.08)" },
-              },
-              y: { grid: { display: false }, ticks: { font: { size: 11 } } },
-            },
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                callbacks: {
-                  label(ctx) {
-                    const v = ctx.parsed.x;
-                    return v != null ? `${v} 次` : "";
-                  },
-                },
-              },
-            },
-          },
-        });
-
-        const days30 = lastNDaysIso(30);
-        const labels30 = days30.map((iso) => {
-          const p = iso.split("-").map(Number);
-          return `${p[1]}/${p[2]}`;
-        });
-        const datasetsStack = orderedKinds.map((k, i) => ({
-          label: k.label,
-          data: days30.map((iso) => countKindInDay(c30, iso, k.id)),
-          backgroundColor: CHECKIN_CHART_COLORS[i % CHECKIN_CHART_COLORS.length],
-          borderWidth: 0,
-        }));
-
-        checkinStack30 = new Chart(checkinCanvasStack30, {
-          type: "bar",
-          data: {
-            labels: labels30,
-            datasets: datasetsStack,
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              x: {
-                stacked: true,
-                grid: { display: false },
-                ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 9 },
-              },
-              y: {
-                stacked: true,
-                beginAtZero: true,
-                ticks: { stepSize: 1, precision: 0 },
-                grid: { color: "rgba(20, 78, 74, 0.08)" },
-              },
-            },
-            plugins: {
-              legend: {
-                display: true,
-                position: "bottom",
-                labels: { boxWidth: 12, font: { size: 10 }, usePointStyle: true },
-              },
-              tooltip: {
-                mode: "index",
-                intersect: false,
-                callbacks: {
-                  footer: (items) => {
-                    if (!items.length) return "";
-                    const sum = items.reduce((s, it) => s + it.parsed.y, 0);
-                    return `當日合計 ${sum} 次`;
-                  },
-                },
-              },
-            },
-          },
-        });
-
-        if (pieTotal === 0) {
-          checkinPie30 = new Chart(checkinCanvasPie30, {
-            type: "doughnut",
-            data: {
-              labels: ["近 30 天無次數"],
-              datasets: [
-                {
-                  data: [1],
-                  backgroundColor: ["#e2e8f0"],
-                  borderWidth: 2,
-                  borderColor: "#fff",
-                },
-              ],
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false },
-                tooltip: { enabled: false },
-              },
-            },
-          });
-        } else {
-          const pieColors = orderedKinds.map((_, i) => CHECKIN_CHART_COLORS[i % CHECKIN_CHART_COLORS.length]);
-          checkinPie30 = new Chart(checkinCanvasPie30, {
-            type: "doughnut",
-            data: {
-              labels: orderedKinds.map((k) => k.label),
-              datasets: [
-                {
-                  data: counts30,
-                  backgroundColor: pieColors,
-                  borderWidth: 2,
-                  borderColor: "#fff",
-                },
-              ],
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: {
-                  position: "bottom",
-                  labels: { boxWidth: 12, font: { size: 10 } },
-                },
-                tooltip: {
-                  callbacks: {
-                    label(ctx) {
-                      const v = Number(ctx.raw);
-                      const pct = pieTotal ? ((v / pieTotal) * 100).toFixed(1) : "0";
-                      return `${ctx.label}: ${v} 次（${pct}%）`;
-                    },
-                  },
-                },
-              },
-            },
-          });
-        }
-      }
-
-      const totalN = all.length;
-      checkinRecentMeta.textContent = totalN === 0 ? "尚無紀錄" : `共 ${totalN} 筆`;
-
-      const recent = [...all].sort((a, b) => b.ts - a.ts).slice(0, 25);
-      if (recent.length === 0) {
-        checkinRecent.innerHTML = '<p class="empty">尚無紀錄</p>';
-        checkinRecentNote.hidden = true;
-      } else {
-        const fmt = new Intl.DateTimeFormat("zh-Hant", {
-          month: "numeric",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-        checkinRecent.innerHTML = recent
-          .map((c) => {
-            const lab = escapeHtml(kindLabel(c.kind));
-            return `<div class="checkin-log"><strong>${lab}</strong><span>${fmt.format(c.ts)}</span></div>`;
-          })
-          .join("");
-        if (totalN > 25) {
-          checkinRecentNote.textContent = `僅列出最近 25 筆，其餘 ${totalN - 25} 筆仍保存在此裝置。`;
-          checkinRecentNote.hidden = false;
-        } else {
-          checkinRecentNote.hidden = true;
-        }
-      }
-    }
-
-    function bindCheckinGridClickOnce() {
-      if (checkinGrid.dataset.clickBound === "1") return;
-      checkinGrid.dataset.clickBound = "1";
-      checkinGrid.addEventListener("click", (ev) => {
-        if (checkinSuppressClickKind) {
-          const hitBtn = ev.target.closest(".checkin-btn[data-kind]");
-          const hitKind = hitBtn ? hitBtn.getAttribute("data-kind") : null;
-          if (hitKind === checkinSuppressClickKind) {
-            checkinSuppressClickKind = null;
-            ev.preventDefault();
-            ev.stopPropagation();
-            return;
-          }
-          checkinSuppressClickKind = null;
-        }
-        const btn = ev.target.closest(".checkin-btn[data-kind]");
-        if (!btn || btn.disabled) return;
-        const kind = btn.getAttribute("data-kind");
-        if (!kind) return;
-        const ts = Date.now();
-        const todayKey = localDayKey(ts);
-        const rows = loadCheckins();
-        if (rows.some((c) => c.kind === kind && localDayKey(c.ts) === todayKey)) {
-          showToast("此項目今天已打過，每項每天最多一次");
-          return;
-        }
-        rows.push({ ts, kind });
-        saveCheckins(rows);
-        showUndoCheckinToast(ts, kind);
-        renderCheckinPanel();
-      });
-    }
-
-    const CHECKIN_LONG_PRESS_MS = 520;
-    const CHECKIN_LONG_PRESS_MOVE_PX = 14;
-
-    function bindCheckinGridLongPressOnce() {
-      if (checkinGrid.dataset.longPressBound === "1") return;
-      checkinGrid.dataset.longPressBound = "1";
-      checkinGrid.addEventListener("contextmenu", (ev) => {
-        const btn = ev.target.closest(".checkin-btn-custom.checkin-btn[data-kind]");
-        if (btn) ev.preventDefault();
-      });
-      checkinGrid.addEventListener("pointerdown", (ev) => {
-        if (ev.button !== 0) return;
-        const btn = ev.target.closest(".checkin-btn-custom.checkin-btn[data-kind]");
-        if (!btn || btn.disabled) return;
-        const sx = ev.clientX;
-        const sy = ev.clientY;
-        let timer = null;
-        const clearTimer = () => {
-          if (timer) clearTimeout(timer);
-          timer = null;
-        };
-        const onMove = (e) => {
-          if (Math.hypot(e.clientX - sx, e.clientY - sy) > CHECKIN_LONG_PRESS_MOVE_PX) {
-            detach();
-            clearTimer();
-          }
-        };
-        const onUp = () => {
-          detach();
-          clearTimer();
-        };
-        function detach() {
-          window.removeEventListener("pointermove", onMove);
-          window.removeEventListener("pointerup", onUp);
-          window.removeEventListener("pointercancel", onUp);
-        }
-        window.addEventListener("pointermove", onMove, { passive: true });
-        window.addEventListener("pointerup", onUp, { passive: true });
-        window.addEventListener("pointercancel", onUp, { passive: true });
-        timer = setTimeout(() => {
-          timer = null;
-          detach();
-          const kind = btn.getAttribute("data-kind");
-          if (!kind) return;
-          const labelEl = btn.querySelector(".checkin-label");
-          const label = labelEl ? String(labelEl.textContent || "").trim() : kind;
-          checkinSuppressClickKind = kind;
-          openDeleteCheckinKindModal(kind, label || kind);
-          setTimeout(() => {
-            if (checkinSuppressClickKind === kind) checkinSuppressClickKind = null;
-          }, 900);
-        }, CHECKIN_LONG_PRESS_MS);
-      });
-    }
-
-    function renderCheckinGrid() {
-      const kinds = getCheckinButtonKinds();
-      checkinGrid.innerHTML = kinds
-        .map((k) => {
-          const isPreset = CHECK_KINDS_PRESET.some((p) => p.id === k.id);
-          const btnClass = isPreset ? `checkin-btn checkin-btn-${k.id}` : "checkin-btn checkin-btn-custom";
-          return `<button type="button" class="${btnClass}" data-kind="${escapeHtml(k.id)}">${checkinIconHtml(k.id)}<span class="checkin-label">${escapeHtml(k.label)}</span></button>`;
-        })
-        .join("");
-      updateCheckinButtonsForToday();
-    }
-
-    function addCustomCheckinKindFromInput() {
-      const raw = checkinCustomLabelInput.value;
-      const label = raw.trim();
-      if (!label) {
-        showToast("請輸入項目名稱");
-        return;
-      }
-      if (label.length > 20) {
-        showToast("名稱請 20 字以內");
-        return;
-      }
-      const customs = loadCustomKinds();
-      if (customs.length >= CHECKIN_CUSTOM_KIND_MAX) {
-        showToast(`自訂項目最多 ${CHECKIN_CUSTOM_KIND_MAX} 個`);
-        return;
-      }
-      const allBtn = getCheckinButtonKinds();
-      if (allBtn.some((k) => k.label.trim() === label)) {
-        showToast("已有相同名稱的項目");
-        return;
-      }
-      const id = "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-      customs.push({ id, label });
-      saveCustomKinds(customs);
-      checkinCustomLabelInput.value = "";
-      renderCheckinGrid();
-      if (settingsModal.classList.contains("open")) renderSettingsCheckinCustomList();
-      showToast("已新增：" + label);
-    }
-
-    undoToastBtn.addEventListener("click", () => {
-      if (!pendingUndoCheckin) return;
-      const { ts, kind } = pendingUndoCheckin;
-      const rows = loadCheckins();
-      for (let i = rows.length - 1; i >= 0; i--) {
-        if (rows[i].ts === ts && rows[i].kind === kind) {
-          rows.splice(i, 1);
-          break;
-        }
-      }
-      saveCheckins(rows);
-      hideUndoCheckinToast();
-      showToast("已取消該次打卡");
-      renderCheckinPanel();
-    });
-
-    function switchMainTab(which) {
-      mainTab = which;
-      const onWeight = which === "weight";
-      viewWeight.hidden = !onWeight;
-      viewCheckin.hidden = onWeight;
-      if (onWeight) {
-        weightHeaderActions.removeAttribute("hidden");
-      } else {
-        weightHeaderActions.setAttribute("hidden", "");
-      }
-      tabWeight.setAttribute("aria-selected", onWeight ? "true" : "false");
-      tabCheckin.setAttribute("aria-selected", onWeight ? "false" : "true");
-      const loggedIn = !!firebaseAuth.currentUser;
-      if (onWeight) {
-        appTitle.textContent = "每日體重";
-        appSubtitle.textContent = loggedIn
-          ? "已登入：體重紀錄會與雲端同步"
-          : "資料存在這台裝置上，未登入則不會上傳伺服器";
-      } else {
-        appTitle.textContent = "習慣打卡";
-        appSubtitle.textContent = loggedIn
-          ? "已登入：打卡紀錄會與雲端同步"
-          : "打卡資料僅存在此裝置，可在此查看頻率與紀錄";
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => renderCheckinPanel());
-        });
-      }
-    }
-
     function refreshLoginSubtitles() {
-      switchMainTab(mainTab);
+      const loggedIn = !!firebaseAuth.currentUser;
+      appSubtitle.textContent = loggedIn
+        ? "已登入：體重紀錄會與雲端同步"
+        : "資料存在這台裝置上，未登入則不會上傳伺服器";
     }
-
-    tabWeight.addEventListener("click", () => switchMainTab("weight"));
-    tabCheckin.addEventListener("click", () => switchMainTab("checkin"));
-
-    bindCheckinGridClickOnce();
-    bindCheckinGridLongPressOnce();
-    renderCheckinGrid();
-    checkinCustomAddBtn.addEventListener("click", addCustomCheckinKindFromInput);
-    checkinCustomLabelInput.addEventListener("keydown", (ev) => {
-      if (ev.key === "Enter") {
-        ev.preventDefault();
-        addCustomCheckinKindFromInput();
-      }
-    });
 
     document.getElementById("mergePickLocal").addEventListener("click", () => resolveMerge("local"));
     document.getElementById("mergePickCloud").addEventListener("click", () => resolveMerge("cloud"));
